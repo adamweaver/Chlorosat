@@ -26,17 +26,15 @@ A tool for monitoring local vegetation in the OKC area using satellite data and 
 
 ## Tech Stack
 
-Frontend: HTML, CSS, JavaScript
+Frontend: Next.js, HTML, CSS, JavaScript
 
+- Handles application routing and requests to backend API endpoints
+- Builds the user interface and displays the vegetation/satellite data
 - Dependencies: - Leaflet.js + Leaflet.heat
-
-Routing: NextJS
-
-- Handles different API endpoinst
 
 Backend: Python
 
-- For parsing satellite imagery and building a json with point data
+- Parses satellite imagery and generates JSON containing point data
 
 ## Setup
 
