@@ -1,0 +1,43 @@
+# CI: checks every PR (and main) so broken code can't be merged.
+# Two independent jobs run in parallel on GitHub's servers:
+#   pipeline -> Python lint (ruff) + tests (pytest)
+#   web      -> JS lint (eslint) + static build (proves the site still builds)
+# TODO(CS-024, S3): add dependency caching + path filters (skip a job when its folder didn't change).
+# Deploy is a separate workflow (deploy.yml, CS-024). See docs/DEPLOYMENT.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: CI only needs to read the code.
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6       # installs uv (it then installs Python from .python-version)
+      - run: uv sync --locked              # --locked: fail if uv.lock is out of date with pyproject.toml
+      - run: uv run ruff check
+      - run: uv run pytest
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci                        # exact versions from package-lock.json
+      - run: npm run lint
+      - run: npm run build                 # output: web/out/

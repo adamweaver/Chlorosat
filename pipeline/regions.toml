@@ -1,0 +1,11 @@
+# Regions the pipeline can process. A new region = a new [[region]] block (PRINCIPLES #4).
+#
+# bbox = [west, south, east, north] in degrees (lon/lat, EPSG:4326), the order STAC APIs expect.
+# The manifest converts it to Leaflet's [[south, west], [north, east]] (docs/ARCHITECTURE.md).
+# zoom = starting map zoom level on the website.
+
+[[region]]
+id = "okc-norman"
+name = "Oklahoma City & Norman, OK"
+bbox = [-97.75, 35.13, -97.20, 35.70]
+zoom = 10
