@@ -1,0 +1,42 @@
+# Python project config for the pipeline (read by uv, ruff, pytest).
+# Add dependencies with `uv add <pkg>` (updates this file + uv.lock; commit both).
+
+[project]
+name = "chlorosat"
+version = "0.1.0"
+description = "Chlorosat pipeline: satellite bands -> vegetation layers (NDVI + visible) + stats"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.5.3",
+    "pillow>=12.3.0",
+    "pystac-client>=0.9.0",
+    "rasterio>=1.5.1",
+]
+
+# Makes `uv run chlorosat ...` call chlorosat/cli.py:main()
+[project.scripts]
+chlorosat = "chlorosat.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.8",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# E/F: errors + common bugs, I: import order, B: likely bugs, UP: modern Python syntax
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Data table: one class per line reads better than wrapped lines
+"src/chlorosat/methods.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

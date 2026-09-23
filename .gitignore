@@ -1,0 +1,30 @@
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# --- Secrets (never commit) ---
+.env
+.env.*
+*.pem
+*.key
+
+# --- Python / pipeline ---
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+# Raw + intermediate satellite data: large, re-downloadable
+pipeline/data/*
+!pipeline/data/.gitkeep
+
+# --- Web (Next.js) ---
+node_modules/
+web/.next/
+# Built site: CI builds this and deploys it; never commit
+web/out/
+next-env.d.ts
+npm-debug.log*

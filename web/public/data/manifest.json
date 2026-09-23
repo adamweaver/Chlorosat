@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "generated": "2026-09-22",
+  "note": "SAMPLE manifest, no real data yet. The pipeline (CS-011) overwrites this file. Classes and colors are drafts.",
+  "defaultMethod": "ndvi",
+  "methods": [
+    {
+      "id": "ndvi",
+      "name": "Infrared (NDVI)",
+      "description": "Plant health, measured from near-infrared light that healthy plants reflect.",
+      "bands": [
+        "red",
+        "nir"
+      ],
+      "classes": [
+        {
+          "key": "water",
+          "min": -1.0,
+          "max": 0.0,
+          "color": "#7fa7c9",
+          "label": "Water / no plants"
+        },
+        {
+          "key": "bare",
+          "min": 0.0,
+          "max": 0.2,
+          "color": "#8c510a",
+          "label": "Bare ground / built up"
+        },
+        {
+          "key": "sparse",
+          "min": 0.2,
+          "max": 0.4,
+          "color": "#d8b365",
+          "label": "Sparse plants"
+        },
+        {
+          "key": "moderate",
+          "min": 0.4,
+          "max": 0.6,
+          "color": "#5ab4ac",
+          "label": "Moderate plants"
+        },
+        {
+          "key": "dense",
+          "min": 0.6,
+          "max": 1.0,
+          "color": "#01665e",
+          "label": "Dense, healthy plants"
+        }
+      ],
+      "changeClasses": [
+        {
+          "key": "lost",
+          "min": -2.0,
+          "max": -0.1,
+          "color": "#8c510a",
+          "label": "Lost greenness"
+        },
+        {
+          "key": "stable",
+          "min": -0.1,
+          "max": 0.1,
+          "color": "#00000000",
+          "label": "About the same"
+        },
+        {
+          "key": "gained",
+          "min": 0.1,
+          "max": 2.0,
+          "color": "#01665e",
+          "label": "Gained greenness"
+        }
+      ]
+    },
+    {
+      "id": "visible",
+      "name": "Visible light",
+      "description": "Green-looking areas in a normal color photo. Simpler, but easier to fool.",
+      "bands": [
+        "red",
+        "green",
+        "blue"
+      ],
+      "classes": [
+        {
+          "key": "bare",
+          "min": -1.0,
+          "max": 0.05,
+          "color": "#8c510a",
+          "label": "Bare ground / built up"
+        },
+        {
+          "key": "sparse",
+          "min": 0.05,
+          "max": 0.15,
+          "color": "#d8b365",
+          "label": "Sparse plants"
+        },
+        {
+          "key": "moderate",
+          "min": 0.15,
+          "max": 0.3,
+          "color": "#5ab4ac",
+          "label": "Moderate plants"
+        },
+        {
+          "key": "dense",
+          "min": 0.3,
+          "max": 1.0,
+          "color": "#01665e",
+          "label": "Dense, healthy plants"
+        }
+      ],
+      "changeClasses": [
+        {
+          "key": "lost",
+          "min": -2.0,
+          "max": -0.1,
+          "color": "#8c510a",
+          "label": "Lost greenness"
+        },
+        {
+          "key": "stable",
+          "min": -0.1,
+          "max": 0.1,
+          "color": "#00000000",
+          "label": "About the same"
+        },
+        {
+          "key": "gained",
+          "min": 0.1,
+          "max": 2.0,
+          "color": "#01665e",
+          "label": "Gained greenness"
+        }
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "id": "okc-norman",
+      "name": "Oklahoma City & Norman, OK",
+      "bounds": [
+        [
+          35.13,
+          -97.75
+        ],
+        [
+          35.7,
+          -97.2
+        ]
+      ],
+      "center": [
+        35.415,
+        -97.475
+      ],
+      "zoom": 10,
+      "layers": {
+        "ndvi": {
+          "years": [],
+          "changes": []
+        },
+        "visible": {
+          "years": [],
+          "changes": []
+        }
+      }
+    }
+  ]
+}
