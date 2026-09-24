@@ -53,6 +53,8 @@ They **will disagree sometimes**, e.g. stressed plants that still look green, ar
 | `components/MethodToggle.js`, `YearSelector.js`, `Legend.js`, `StatsPanel.js`, `Header.js` | UI controls. |
 | `lib/data.js` | Fetch `manifest.json` + stats JSON. |
 
+`web/landing/` (outside `src/`, not built by Next) holds the plain-HTML placeholder page that's live now. It will become the home page (D11). See [web/landing/README.md](../web/landing/README.md).
+
 ## Data contract
 The **only** link between pipeline and website. Both sides must follow it. **Changing it = major change** (team approval).
 
@@ -137,3 +139,4 @@ Status `Proposed` = suggested during outlining; needs team OK. Change to `Accept
 | D8 | Two detection methods: infrared (NDVI, default) + visible light, shown separately with differences explained | Team intent; visible light works on any color imagery, NDVI measures plant health | Team intent 2026-09-22; confirm details |
 | D9 | Visible-light method: which index + which imagery | See [research/visible-detection.md](research/visible-detection.md) | **Open** (Carter, CS-026) |
 | D10 | Hosting is on Adam's personal VPS (shared with his personal site). All server-side work is **Adam only**: VPS, nginx, DNS/domain, HTTPS, deploy keys, GitHub settings/secrets | Adam owns the server; protects his personal site | Accepted 2026-09-22 (VPS owner) |
+| D11 | Landing page becomes the home page (`/`); the map moves to its own page (e.g. `/map/`), opened with a button | First load stays light (no Leaflet/overlays until asked), which helps low-end devices. Source: `web/landing/` (CS-038) | Proposed 2026-09-24 |

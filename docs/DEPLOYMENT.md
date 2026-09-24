@@ -11,6 +11,8 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
                                          manual fallback: deploy/deploy.sh (run by Adam)
 ```
 
+**Right now:** a hand-deployed placeholder page is live. Its source is [web/landing/](../web/landing/). The first auto-deploy replaces it with `web/out/` (`rsync --delete`), so port it into the home page first (CS-038) if it should stay.
+
 ## One-time server setup (Adam, Sprint 2, CS-013)
 Fill in the real commands as you go.
 - [ ] Note VPS OS + version here: `TODO`

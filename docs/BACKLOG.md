@@ -35,6 +35,7 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-034 | Show data source + dates on the map itself (transparency) | S | | | |
 | CS-035 | Opacity slider for overlays | S | | | |
 | CS-036 | Uptime monitor + Lighthouse performance check | S | | 5 (perf testing) | |
+| CS-038 | Port `web/landing/` into the Next.js home page; move the map to `/map/` behind a button (D11) | S | | | |
 | CS-037 | Side-by-side / swipe view: infrared vs visible light | C | | | |
 | CS-040 | More regions (config only) | C | | | |
 | CS-041 | Download PNG / CSV of stats | C | | | |
