@@ -13,8 +13,8 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-010 | Pipeline: fetch bands (RGB + NIR + cloud mask) for a region + year | M | Kevin | 2 | |
 | CS-011 | Pipeline: NDVI → colored PNG → export + manifest | M | Carter | 2 | |
 | CS-012 | Web: Leaflet map + vegetation overlay from manifest | M | David | 2 | |
-| CS-013 | Server (Adam only): domain/DNS, nginx site + HTTPS, locked deploy key, `deploy.sh`, branch protection | M | Adam | 2 | |
 | CS-014 | UX: wireframes, theme tokens, header + layout | M | Lucas | 2 | |
+| CS-027 | Server (Adam only): GitHub `production` environment + secrets, repo security settings, nginx cache headers | M | Adam | 3 | |
 
 ## Backlog
 | ID | Item | Pri | Owner | Sprint | PR |
@@ -26,7 +26,6 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-024 | DevOps: `deploy.yml` auto-deploy (CD), CI caching + path filters | M | Adam | 3 | |
 | CS-025 | Web: base map toggle (satellite / streets) | M | | | |
 | CS-026 | Pipeline: visible-light method: pick index (D9) + `visible.py` + tests | M | Carter | 3 | |
-| CS-027 | Server (Adam only): GitHub `production` environment + secrets, repo security settings, nginx cache headers | M | Adam | 3 | |
 | CS-030 | Address / place search (Nominatim, respect its usage policy) | S | | | |
 | CS-031 | Neighborhood / ZIP stats (census boundaries) | S | | | |
 | CS-032 | Shareable link (method + year + view saved in URL) | S | | | |
@@ -47,4 +46,5 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | ID | Item | Owner | Sprint | PR |
 |---|---|---|---|---|
 | CS-000 | Repo created, README, branding assets | Team | 1 | #2 |
-| CS-004 | Tech stack research write-up | Carter | 1→2 | |
+| CS-004 | Tech stack research write-up | Carter | 1→2 | #6 |
+| CS-013 | Server (Adam only): domain/DNS, nginx site + HTTPS, locked deploy key, `deploy.sh`, branch protection | Adam | 2 | #5 |
