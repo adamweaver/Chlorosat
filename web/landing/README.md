@@ -11,10 +11,12 @@ The "Work in progress" page that is **live on the VPS right now**. It's a standa
 | `robots.txt` | Lets search engines index the site. |
 
 ## Plan: this becomes the home page
-Later, this page gets ported into the Next.js app as the home page (`/`), and the map moves to its own page (e.g. `/map/`) behind a button. That way the first page load stays light: Leaflet, the map, and the overlay PNGs only load when someone asks for them. Tracked as **CS-038** in [BACKLOG.md](../../docs/BACKLOG.md), decision **D11** in [ARCHITECTURE.md](../../docs/ARCHITECTURE.md#decision-log).
+Later, this page gets ported into the Next.js app as the home page (`/`), and the map moves from `/` (right now `src/app/page.js` renders `<MapApp />`) to its own page (e.g. `/map/`) behind a button. That way the first page load stays light: Leaflet, the map, and the overlay PNGs only load when someone asks for them. Tracked as **CS-038** in [BACKLOG.md](../../docs/BACKLOG.md), decision **D11** in [ARCHITECTURE.md](../../docs/ARCHITECTURE.md#decision-log).
 
 Notes for the port:
-- `index.html` → `src/app/page.js` + CSS; the star script → a small `"use client"` component.
+- First move the map: `src/app/page.js` → `src/app/map/page.js` (it keeps using `page.module.css`).
+- `index.html` → a new `src/app/page.js` + a CSS module in `src/css/` (the project's CSS convention); the star script → a small `"use client"` component in `src/components/`.
+- Add the "Open the map" button (links to `/map/`), and a way back home from the map (e.g. the logo in `Header.js`).
 - `outfit.woff2` → load with `next/font/local`, and keep `OFL.txt` with it.
 - `robots.txt` → `web/public/robots.txt` (Next copies `public/` into `out/`).
 - Favicon: already handled by `src/app/icon.svg`.
@@ -24,6 +26,8 @@ Notes for the port:
 
 ## Deploying it by hand (Adam only)
 ```bash
-rsync -az --delete --chmod=D755,F644 web/landing/ <you>@<host>:/var/www/chlorosat.com/
+# Locked deploy key; rrsync roots the destination at /var/www/chlorosat.com. Practice run first with -n.
+rsync -az --delete --exclude README.md --chmod=D755,F644 -e "ssh -i ~/.ssh/chlorosat-ci" \
+  web/landing/ chlorosat-deploy@<host>:
 ```
-Once auto-deploy (CS-024) is on, every merge to `main` replaces the live files with `web/out/`, and this placeholder goes away. Port it first if it should stay.
+Once auto-deploy (CS-024) is on, every merge to `main` replaces the live files with `web/out/`: the live page becomes the map, and this placeholder goes away. Port it first if it should stay.

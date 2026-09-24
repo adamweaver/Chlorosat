@@ -3,6 +3,9 @@
 #   pipeline -> Python lint (ruff) + tests (pytest)
 #   web      -> JS lint (eslint) + static build (proves the site still builds)
 # TODO(CS-024, S3): add dependency caching + path filters (skip a job when its folder didn't change).
+#   Filter PER JOB (e.g. dorny/paths-filter + `if:`), never with a workflow-level `paths:`.
+#   `pipeline` and `web` are required checks on main: a skipped job counts as passed,
+#   but a workflow that never runs blocks every merge ("Expected — Waiting").
 # Deploy is a separate workflow (deploy.yml, CS-024). See docs/DEPLOYMENT.md.
 name: CI
 

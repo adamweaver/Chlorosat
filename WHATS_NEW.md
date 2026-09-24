@@ -69,6 +69,6 @@ Pipeline output (PNGs/JSON) gets committed through a PR, just like code. Raw sat
 | 6 | Years + season to compare | 2019–2025, Jun–Aug | Kevin + David | Sprint 3 start |
 | 7 | "Change" threshold | ±0.1 (per method) | David + Carter | Sprint 3 |
 | 8 | Week numbering: we assumed week 5 = Sep 21–27, which puts end of Sprint 3 (Oct 14) at **week 8** | Usable milestone moved to ~Oct 7 (week 7) | Team | Now |
-| 9 | Is the repo public? (Free branch protection needs it; otherwise Adam uses the Student Pack's GitHub Pro.) | ? | Adam | Sprint 2 |
+| 9 | Is the repo public? | ✅ **Yes** (2026-09-24, professor's request). `main` is protected; never commit secrets or server addresses ([rules](AGENTS.md#security--secrets)) | Adam | Done |
 | 10 | Where standups happen (which chat) | ? | Team | Now |
 | 11 | Are the Sprint 2/3 tasks + hours realistic? (Adam and Kevin swapped Sprint 2 lanes because of the server rule; Carter has two smaller Sprint 3 tasks) | `docs/scrum/` | Team | Sprint 2 planning |

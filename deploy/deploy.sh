@@ -10,7 +10,8 @@
 #          chlorosat-deploy@<host>:           (the rrsync-locked deploy key; path is relative
 #                                              to /var/www/chlorosat.com)
 #          <you>@<host>:/var/www/chlorosat.com/   (your own login)
-#      Exit with a helpful message if it's missing.
+#      Exit with a helpful message if it's missing. NO default value: this repo is public, and a
+#      default would publish the server's IP (see docs/DEPLOYMENT.md#security).
 #   3. Build:   (cd web && npm ci && npm run build)
 #   4. Upload:  rsync -az --delete --chmod=D755,F644 web/out/ "$DEPLOY_TARGET"
 #        -a keeps file info, -z compresses, --delete removes files no longer in the build,

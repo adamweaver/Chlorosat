@@ -24,10 +24,10 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-021 | Pipeline: yearly stats + change maps/stats (all methods) | M | Lucas | 3 | |
 | CS-022 | Web: method toggle, year selector, legend, stats panel | M | Kevin | 3 | |
 | CS-023 | Web: compare mode, About page (incl. why methods differ), usability test | M | Adam | 3 | |
-| CS-024 | DevOps: `deploy.yml` auto-deploy (CD), CI caching + path filters | M | Carter | 3 | |
+| CS-024 | DevOps: `deploy.yml` auto-deploy (CD), CI caching + path filters | M | Adam | 3 | |
 | CS-025 | Web: base map toggle (satellite / streets) | M | | | |
 | CS-026 | Pipeline: visible-light method: pick index (D9) + `visible.py` + tests | M | Carter | 3 | |
-| CS-027 | Server (Adam only): GitHub `production` environment + secrets, nginx cache headers | M | Adam | 3 | |
+| CS-027 | Server (Adam only): GitHub `production` environment + secrets, repo security settings, nginx cache headers | M | Adam | 3 | |
 | CS-030 | Address / place search (Nominatim, respect its usage policy) | S | | | |
 | CS-031 | Neighborhood / ZIP stats (census boundaries) | S | | | |
 | CS-032 | Shareable link (method + year + view saved in URL) | S | | | |
@@ -35,7 +35,7 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-034 | Show data source + dates on the map itself (transparency) | S | | | |
 | CS-035 | Opacity slider for overlays | S | | | |
 | CS-036 | Uptime monitor + Lighthouse performance check | S | | 5 (perf testing) | |
-| CS-038 | Port `web/landing/` into the Next.js home page; move the map to `/map/` behind a button (D11) | S | | | |
+| CS-038 | Port `web/landing/` into the Next.js home page; move the map page (`src/app/page.js` → `src/app/map/page.js`) to `/map/` behind a button (D11) | S | | | |
 | CS-037 | Side-by-side / swipe view: infrared vs visible light | C | | | |
 | CS-040 | More regions (config only) | C | | | |
 | CS-041 | Download PNG / CSV of stats | C | | | |

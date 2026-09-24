@@ -36,8 +36,9 @@ Early development (Sprint 2 → 3). Working now:
 
 - Leaflet map locked to the region bounds from `manifest.json`.
 - Glass UI overlay: search bar, year slider, vegetation layer opacity, View settings, legend, recenter/zoom, Satellite/Map buttons. Controls update shared state, but **most don't change the map yet** (stubs until the data layers land).
+- **Live site:** a placeholder page at [chlorosat.com](https://chlorosat.com) (HTTPS). The map goes live once auto-deploy is set up (Sprint 3).
 
-Not yet: real vegetation overlays, satellite tiles, stats, compare mode, deployment. See [docs/BACKLOG.md](docs/BACKLOG.md).
+Not yet: real vegetation overlays, satellite tiles, stats, compare mode, auto-deploy. See [docs/BACKLOG.md](docs/BACKLOG.md).
 
 ## How it works
 
@@ -67,8 +68,8 @@ pipeline/ (Python, on laptops)  →  web/public/data/ (PNGs + JSON, committed)  
 Needs Git, Node.js 22, and uv. Full guide: [docs/SETUP.md](docs/SETUP.md).
 
 ```bash
-git clone https://github.com/adamweaver/VegetationMonitoring.git
-cd VegetationMonitoring
+git clone https://github.com/adamweaver/Chlorosat.git
+cd Chlorosat
 
 # Website
 cd web
@@ -94,6 +95,7 @@ uv run chlorosat --help
 | `web/src/components/` | UI. `MapApp` holds map state → `MapView` draws the map layers, `MapOverlay` lays out the controls (one component per control). |
 | `web/src/css/` | `globals.css` (design tokens, shared `.glass` / `.range`) + one CSS Module per component. |
 | `web/src/lib/data.js` | Loads `manifest.json` and stats files. |
+| `web/landing/` | The placeholder page live now (plain HTML). Becomes the home page later; the map moves to `/map/` (CS-038, D11). |
 | `web/public/data/` | Pipeline output the site reads (committed). |
 | `deploy/` | nginx config + deploy script (Adam only). |
 | `docs/` | Principles, architecture, backlog, setup, deployment, research, sprint plans. |
@@ -111,7 +113,8 @@ uv run chlorosat --help
 
 ## Branching Strategy
 
-Process: Open a PR into main, get atleast 1 review, then merge. Delete branches after merging
+Process: Open a PR into main, get at least 1 review, then merge. Delete branches after merging.
+`main` is protected: a PR with 1 approval and passing CI is required, and direct or force pushes are blocked.
 
 - `main` — main production branch, never push directly to it
 - `feature/<name>` — one branch per feature (e.g. `feature/ndvi-calculation`)
@@ -125,7 +128,7 @@ Keep them short and straightforward (e.g. `Add NDVI calculation endpoint`, not `
 ## CI/CD
 
 - **CI (live):** every PR and push to `main` runs pipeline lint + tests and web lint + build via GitHub Actions ([ci.yml](.github/workflows/ci.yml)). CI must pass before merging.
-- **CD (planned, CS-024):** auto-deploy `web/out/` to the VPS on merge. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+- **CD (planned, CS-024 + CS-027):** auto-deploy `web/out/` to the VPS on every merge to `main`, using a deploy key that can only write the site's folder. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Contributing
 
@@ -133,6 +136,8 @@ Keep them short and straightforward (e.g. `Add NDVI calculation endpoint`, not `
 2. Make your changes and commit
 3. Open a PR into `main` and request a review
 4. Merge once approved
+
+**This repo is public.** Never commit passwords, tokens, keys, `.env` files, or server addresses (use placeholders like `<host>`). Rules: [AGENTS.md → Security & secrets](AGENTS.md#security--secrets) and [DEPLOYMENT.md → Security](docs/DEPLOYMENT.md#security).
 
 ## Team
 
