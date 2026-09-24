@@ -9,7 +9,7 @@
 - **CI:** every PR is automatically linted, tested, and built on GitHub.
 - **AI rules** in `AGENTS.md`. AI-written code gets an `[AI]` comment block.
 - **Moved:** `Branding Assets/` → `branding/`, Scrum PDF → `docs/scrum/sprint-1-plan.pdf`.
-- **Repo URL changed** to https://github.com/adamweaver/VegetationMonitoring
+- **Repo URL changed** to https://github.com/adamweaver/Chlorosat
 
 ## How it works (big picture)
 1. **Pipeline** (Python, runs on our laptops): satellite images → vegetation layers → colored PNGs + stats JSON, saved in `web/public/data/`.
@@ -52,7 +52,7 @@ Pipeline output (PNGs/JSON) gets committed through a PR, just like code. Raw sat
 
 ## Setup (everyone, ~15 min)
 - [ ] Install **Git**, **Node.js 22**, **uv** (links in `docs/SETUP.md`). If you use Fedora's `dnf` uv, also run `uv python install 3.12`.
-- [ ] Clone the repo. If you already have it: `git remote set-url origin https://github.com/adamweaver/VegetationMonitoring.git`
+- [ ] Clone the repo. If you already have it: `git remote set-url origin https://github.com/adamweaver/Chlorosat.git`
 - [ ] Pipeline: `cd pipeline && uv sync && uv run pytest` (expect 4 passed, 10 skipped)
 - [ ] Website: `cd web && npm ci && npm run dev`, then open http://localhost:3000
 - [ ] Read your Sprint 2 task and `docs/PRINCIPLES.md`.
