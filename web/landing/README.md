@@ -24,6 +24,6 @@ Notes for the port:
 
 ## Deploying it by hand (Adam only)
 ```bash
-rsync -az --delete --chmod=D755,F644 web/landing/ <you>@<host>:/var/www/chlorosat/
+rsync -az --delete --chmod=D755,F644 web/landing/ <you>@<host>:/var/www/chlorosat.com/
 ```
 Once auto-deploy (CS-024) is on, every merge to `main` replaces the live files with `web/out/`, and this placeholder goes away. Port it first if it should stay.

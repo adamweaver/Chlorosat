@@ -3,11 +3,14 @@
 **Owner: Adam.** The VPS also hosts Adam's personal site, so **every server-side action is Adam's only**: VPS, nginx, DNS/domain, HTTPS, deploy keys, and GitHub repo settings/secrets. Teammates never need VPS access. Repo-side work (`deploy.yml`, `deploy.sh`, CI) is normal PR work, and Adam reviews it.
 
 **What gets deployed:** only `web/out/`, the static site built by `npm run build`.
-**Where:** Adam's VPS (1 core, 4 GB RAM, shared with his personal site) → `/var/www/chlorosat`, served by the existing **nginx**, with HTTPS from **certbot**.
+**Where:** Adam's VPS (1 core, 4 GB RAM, shared with his personal site) → `/var/www/chlorosat.com`, served by the existing **nginx** (installed on the host, not in Docker), with HTTPS from **certbot**.
+**Domain:** `chlorosat.com` + `www.chlorosat.com` (www redirects to the main domain). DNS is on **Cloudflare with the proxy on**, which means:
+- SSH/rsync (and CI's `VPS_HOST`) must use the VPS **IP**, not the domain. The proxy only carries web traffic. Keep the IP out of the repo; it lives in the `VPS_HOST` secret.
+- Cloudflare SSL/TLS mode = **Full (strict)**, so the Cloudflare → VPS leg is also HTTPS with a valid certificate.
 
 ```
-merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out/ over SSH ─► VPS /var/www/chlorosat ─► nginx ─► browser
-                   (deploy.yml, Sprint 3)                  (locked-down key: can ONLY write /var/www/chlorosat)
+merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out/ over SSH ─► VPS /var/www/chlorosat.com ─► nginx ─► browser
+                   (deploy.yml, Sprint 3)                  (locked-down key: can ONLY write /var/www/chlorosat.com)
                                          manual fallback: deploy/deploy.sh (run by Adam)
 ```
 
@@ -15,24 +18,25 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 
 ## One-time server setup (Adam, Sprint 2, CS-013)
 Fill in the real commands as you go.
-- [ ] Note VPS OS + version here: `TODO`
-- [ ] Domain / subdomain for Chlorosat: `TODO`. Add a DNS **A record** pointing to the VPS IP.
-- [ ] Web folder: `sudo mkdir -p /var/www/chlorosat`
+- [x] VPS OS + version: Ubuntu 26.04
+- [x] Domain: `chlorosat.com`, DNS **A record** → VPS IP (Cloudflare, proxied)
+- [ ] `www.chlorosat.com`: Cloudflare DNS **CNAME** `www` → `chlorosat.com` (proxied)
+- [x] Web folder: `sudo mkdir -p /var/www/chlorosat.com`
 - [ ] nginx: install [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) (steps in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
-- [ ] HTTPS: `sudo certbot --nginx -d <domain>`
-- [ ] Visit `https://<domain>`: it should show the site with a valid lock icon, **and the personal site should still work**.
+- [ ] HTTPS: `sudo certbot --nginx -d chlorosat.com -d www.chlorosat.com` (one certificate for both names)
+- [ ] Visit `https://chlorosat.com` and `https://www.chlorosat.com` (should redirect): it should show the site with a valid lock icon, **and the personal site should still work**.
 - [ ] Deploy user + locked-down key (next section).
 - [ ] GitHub (repo owner): protect `main` (require PR + 1 review + CI passing). Free accounts only get this on **public** repos. If the repo is private, GitHub Pro is free via the Student Developer Pack.
 
 ## Locked-down deploy key (Adam)
-Goal: even if the CI key leaks, it can **only** write files into `/var/www/chlorosat`. No shell, and no access to the personal site.
-1. Create a user with no sudo, e.g. `chlorosat-deploy`, and make it the owner of `/var/www/chlorosat`.
+Goal: even if the CI key leaks, it can **only** write files into `/var/www/chlorosat.com`. No shell, and no access to the personal site.
+1. Create a user with no sudo, e.g. `chlorosat-deploy`, and make it the owner of `/var/www/chlorosat.com`.
 2. Make a new SSH key pair used **only** for this (`ssh-keygen -t ed25519 -C chlorosat-ci`, no passphrase).
 3. In `~chlorosat-deploy/.ssh/authorized_keys`, restrict the key with `rrsync` (comes with rsync; its path varies by distro):
    ```
-   command="rrsync -wo /var/www/chlorosat",restrict ssh-ed25519 AAAA... chlorosat-ci
+   command="rrsync -wo /var/www/chlorosat.com",restrict ssh-ed25519 AAAA... chlorosat-ci
    ```
-   `-wo` = write-only. `restrict` = no shell, no port forwarding. The rsync destination becomes `chlorosat-deploy@<host>:` (paths are relative to `/var/www/chlorosat`).
+   `-wo` = write-only. `restrict` = no shell, no port forwarding. The rsync destination becomes `chlorosat-deploy@<host>:` (paths are relative to `/var/www/chlorosat.com`).
 4. Test: `ssh -i <key> chlorosat-deploy@<host>` should **refuse** a shell, while an rsync to that destination works.
 
 ## Manual deploy (fallback, Adam)

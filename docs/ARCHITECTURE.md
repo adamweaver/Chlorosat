@@ -131,7 +131,7 @@ Status `Proposed` = suggested during outlining; needs team OK. Change to `Accept
 |---|---|---|---|
 | D1 | Static site + offline pipeline (no backend server) | Tiny VPS; cheap, fast, reliable | Proposed 2026-09-22 |
 | D2 | Colored PNG overlays (Leaflet `ImageOverlay`), not Leaflet.heat | Accurate per-pixel values; light on client. Heatmaps show point density, not values | Proposed 2026-09-22 |
-| D3 | CI builds + auto-deploys `web/out/` via rsync with a locked-down key (rrsync: write-only to `/var/www/chlorosat`); `deploy/deploy.sh` fallback | Meets CI/CD; no built files in git; key can't touch the rest of the VPS | Proposed 2026-09-22 (key lock: Accepted by VPS owner) |
+| D3 | CI builds + auto-deploys `web/out/` via rsync with a locked-down key (rrsync: write-only to `/var/www/chlorosat.com`); `deploy/deploy.sh` fallback | Meets CI/CD; no built files in git; key can't touch the rest of the VPS | Proposed 2026-09-22 (key lock: Accepted by VPS owner) |
 | D4 | nginx (already on Adam's VPS) + certbot for HTTPS | Existing server; Chlorosat is one extra site block | Accepted 2026-09-22 (VPS owner) |
 | D5 | JavaScript (not TypeScript); uv for Python (venv+pip fallback) | Lower learning curve | Proposed 2026-09-22 |
 | D6 | Processed output committed to `web/public/data/`; raw data never committed | CI can build without running the pipeline | Proposed 2026-09-22 |

@@ -8,8 +8,8 @@
 #   2. Read the destination from an env var (never hard-code hosts/keys in git):
 #        DEPLOY_TARGET = rsync destination, e.g.
 #          chlorosat-deploy@<host>:           (the rrsync-locked deploy key; path is relative
-#                                              to /var/www/chlorosat)
-#          <you>@<host>:/var/www/chlorosat/   (your own login)
+#                                              to /var/www/chlorosat.com)
+#          <you>@<host>:/var/www/chlorosat.com/   (your own login)
 #      Exit with a helpful message if it's missing.
 #   3. Build:   (cd web && npm ci && npm run build)
 #   4. Upload:  rsync -az --delete --chmod=D755,F644 web/out/ "$DEPLOY_TARGET"
