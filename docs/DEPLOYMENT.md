@@ -4,7 +4,7 @@
 
 **What gets deployed:** only `web/out/`, the static site built by `npm run build`.
 **Where:** Adam's VPS (1 core, 4 GB RAM, shared with his personal site) → `/var/www/chlorosat.com`, served by the existing **nginx** (installed on the host, not in Docker), with HTTPS from **certbot**.
-**Domain:** `chlorosat.com` + `www.chlorosat.com` (www redirects to the main domain). DNS is on **Cloudflare with the proxy on**, which means:
+**Domain:** `chlorosat.com` + `www.chlorosat.com` (a Cloudflare **Redirect Rule** sends www → `chlorosat.com`, so www requests never reach the VPS). DNS is on **Cloudflare with the proxy on**, which means:
 - SSH/rsync (and CI's `VPS_HOST`) must use the VPS **IP**, not the domain. The proxy only carries web traffic. Keep the IP out of the repo; it lives in the `VPS_HOST` secret.
 - Cloudflare SSL/TLS mode = **Full (strict)**, so the Cloudflare → VPS leg is also HTTPS with a valid certificate.
 
@@ -20,11 +20,12 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 Fill in the real commands as you go.
 - [x] VPS OS + version: Ubuntu 26.04
 - [x] Domain: `chlorosat.com`, DNS **A record** → VPS IP (Cloudflare, proxied)
-- [ ] `www.chlorosat.com`: Cloudflare DNS **CNAME** `www` → `chlorosat.com` (proxied)
+- [x] `www.chlorosat.com`: Cloudflare DNS record (proxied) + Redirect Rule → `https://chlorosat.com`
 - [x] Web folder: `sudo mkdir -p /var/www/chlorosat.com`
-- [ ] nginx: install [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) (steps in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
-- [ ] HTTPS: `sudo certbot --nginx -d chlorosat.com -d www.chlorosat.com` (one certificate for both names)
-- [ ] Visit `https://chlorosat.com` and `https://www.chlorosat.com` (should redirect): it should show the site with a valid lock icon, **and the personal site should still work**.
+- [x] nginx: Chlorosat server block live on the VPS. **Left:** copy the final config (no IP) into [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) (steps in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
+- [x] HTTPS: certbot certificate on the VPS + Cloudflare's edge certificate. Both renew automatically (check certbot's with `sudo certbot renew --dry-run`). Deploys don't touch certificates.
+- [x] `https://chlorosat.com` shows the site with a valid lock icon; `https://www.chlorosat.com` redirects to it.
+- [ ] Confirm the personal site still works.
 - [ ] Deploy user + locked-down key (next section).
 - [ ] GitHub (repo owner): protect `main` (require PR + 1 review + CI passing). Free accounts only get this on **public** repos. If the repo is private, GitHub Pro is free via the Student Developer Pack.
 
