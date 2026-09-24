@@ -21,12 +21,12 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 | Step | Status |
 |---|---|
 | Domain, DNS, HTTPS, www redirect | ✅ Done |
-| Deploy user + rrsync-locked key | ✅ Set up; shell correctly refused. ⏳ rsync test pending |
+| Deploy user + rrsync-locked key | ✅ Shell refused, rsync upload works (tested 2026-09-24) |
 | Branch protection on `main` | ✅ Done (ruleset, see [below](#branch-protection-main)) |
 | Repo security settings (public repo) | ✅ Fork-PR approval, secret scanning, push protection |
 | `deploy/chlorosat.nginx.conf` = real config | ⏳ Pending (CS-013) |
-| `deploy/deploy.sh` | ⏳ Not written yet (CS-013) |
-| GitHub `production` environment + secrets | ⏳ Pending (CS-027) |
+| `deploy/deploy.sh` | ✅ Written + tested locally (CS-013); not yet run against the VPS |
+| GitHub `production` environment + secrets | ✅ Done (`main` only; `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`) |
 | `deploy.yml` | ⏳ Not started (CS-024) |
 | nginx cache headers + gzip check | ⏳ Pending (CS-027) |
 
@@ -38,8 +38,8 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 - [x] nginx: Chlorosat server block live on the VPS. **Left:** copy the final config into [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) with **no IP addresses** (steps in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
 - [x] HTTPS: certbot certificate on the VPS + Cloudflare's edge certificate. Both renew automatically (check certbot's with `sudo certbot renew --dry-run`). Deploys don't touch certificates.
 - [x] `https://chlorosat.com` shows the site with a valid lock icon; `https://www.chlorosat.com` redirects to it.
-- [ ] Confirm the personal site still works.
-- [x] Deploy user + locked-down key (next section). **Left:** rsync test.
+- [x] Confirm the personal site still works.
+- [x] Deploy user + locked-down key (next section), tested.
 - [x] Branch protection on `main` (free because the repo is public).
 
 ## Locked-down deploy key (Adam)
@@ -51,13 +51,20 @@ Goal: even if the CI key leaks, it can **only** write files into `/var/www/chlor
    restrict,command="/usr/bin/rrsync -wo /var/www/chlorosat.com" ssh-ed25519 AAAA... chlorosat-ci
    ```
    `-wo` = write-only. `restrict` = no shell, no port forwarding. The rsync destination becomes `chlorosat-deploy@<host>:` (paths are relative to `/var/www/chlorosat.com`).
-4. Test: `ssh -i <key> chlorosat-deploy@<host>` must **refuse** a shell (✅), and an rsync to that destination must work (practice run first with `-n`).
+4. Test: `ssh -i <key> chlorosat-deploy@<host>` must **refuse** a shell (✅), and an rsync to that destination must work (practice run first with `-n`) (✅).
 
 ## Manual deploy (fallback, Adam)
 ```bash
-DEPLOY_TARGET=chlorosat-deploy@<host>: ./deploy/deploy.sh    # builds web/out/ and rsyncs it (written during CS-013)
+# Practice run first: builds, then only lists what would change (look for "*deleting" lines)
+DRY_RUN=1 DEPLOY_TARGET=chlorosat-deploy@<host>: DEPLOY_SSH_KEY=~/.ssh/chlorosat-ci ./deploy/deploy.sh
+# Real deploy: same command without DRY_RUN=1
+DEPLOY_TARGET=chlorosat-deploy@<host>: DEPLOY_SSH_KEY=~/.ssh/chlorosat-ci ./deploy/deploy.sh
 ```
-`DEPLOY_TARGET` comes from your shell (or a `Host` alias in `~/.ssh/config`), never from a file in the repo.
+- `DEPLOY_TARGET` (required) comes from your shell (or a `Host` alias in `~/.ssh/config`), never from a file in the repo. The script has no default and never prints it.
+- `DEPLOY_SSH_KEY` (optional): the locked key. Leave it out to use your normal SSH setup.
+- `DRY_RUN=1` (optional): change nothing, list changes only.
+- Safety: it stops if the build fails or `web/out/index.html` is missing, so `--delete` can't wipe the live site with an empty folder.
+- ⚠ Until CS-038 is done, a real run replaces the landing page with the map.
 
 ## Automatic deploy (Sprint 3): `.github/workflows/deploy.yml`
 **Adam writes the workflow (CS-024, taken over from Carter 2026-09-24) and sets up the GitHub side (CS-027).** A teammate reviews the PR (branch protection requires 1 approval).
