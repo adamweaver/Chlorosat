@@ -24,18 +24,18 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 | Deploy user + rrsync-locked key | ✅ Shell refused, rsync upload works (tested 2026-09-24) |
 | Branch protection on `main` | ✅ Done (ruleset, see [below](#branch-protection-main)) |
 | Repo security settings (public repo) | ✅ Fork-PR approval, secret scanning, push protection |
-| `deploy/chlorosat.nginx.conf` = real config | ⏳ Pending (CS-013) |
+| `deploy/chlorosat.nginx.conf` = real config | ✅ Done (live on the VPS 2026-09-24) |
 | `deploy/deploy.sh` | ✅ Written + tested locally (CS-013); not yet run against the VPS |
 | GitHub `production` environment + secrets | ✅ Done (`main` only; `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`) |
 | `deploy.yml` | ⏳ Not started (CS-024) |
-| nginx cache headers + gzip check | ⏳ Pending (CS-027) |
+| nginx cache headers + gzip check | ✅ Cache headers live (visible after the first real deploy); gzip not needed (Cloudflare compresses) |
 
 ## One-time server setup (Adam, Sprint 2, CS-013)
 - [x] VPS OS + version: Ubuntu 26.04
 - [x] Domain: `chlorosat.com`, DNS **A record** → VPS IP (Cloudflare, proxied)
 - [x] `www.chlorosat.com`: Cloudflare DNS record (proxied) + Redirect Rule → `https://chlorosat.com`
 - [x] Web folder: `sudo mkdir -p /var/www/chlorosat.com`
-- [x] nginx: Chlorosat server block live on the VPS. **Left:** copy the final config into [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) with **no IP addresses** (steps in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
+- [x] nginx: Chlorosat server block live on the VPS; copy in [deploy/chlorosat.nginx.conf](../deploy/chlorosat.nginx.conf) (no IP addresses; how to change it is in the file). `sudo nginx -t` **before** every reload, so a typo can't take down the personal site.
 - [x] HTTPS: certbot certificate on the VPS + Cloudflare's edge certificate. Both renew automatically (check certbot's with `sudo certbot renew --dry-run`). Deploys don't touch certificates.
 - [x] `https://chlorosat.com` shows the site with a valid lock icon; `https://www.chlorosat.com` redirects to it.
 - [x] Confirm the personal site still works.
