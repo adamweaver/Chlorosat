@@ -1,4 +1,4 @@
-import "./globals.css";
+import "@/css/globals.css";
 import Header from "@/components/Header";
 
 // Page <title> and description (used by browsers + search engines).

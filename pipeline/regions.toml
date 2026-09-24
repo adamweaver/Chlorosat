@@ -7,5 +7,5 @@
 [[region]]
 id = "okc-norman"
 name = "Oklahoma City & Norman, OK"
-bbox = [-97.75, 35.13, -97.20, 35.70]
+bbox = [-97.86, 35.13, -97.20, 35.74]
 zoom = 10

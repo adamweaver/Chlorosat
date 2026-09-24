@@ -1,0 +1,44 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+}
+
+button.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px 0 12px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+}
+
+button.toggle:hover {
+  background: var(--glass-bg-hover);
+}
+
+.grow {
+  flex: 1;
+  text-align: left;
+}
+
+.value {
+  color: var(--glass-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle svg:last-child {
+  transition: transform 150ms;
+}
+
+.toggle[aria-expanded="true"] svg:last-child {
+  transform: rotate(180deg);
+}
+
+.panel {
+  padding: 0 12px 2px;
+}

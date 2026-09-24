@@ -1,0 +1,18 @@
+.map {
+  flex: 1; /* Map fills .mapPage (Leaflet needs a real height to draw). */
+  min-height: 0;
+  width: 100%;
+}
+
+/* Leaflet's attribution line, restyled to match the glass */
+.map:global(.leaflet-container) :global(.leaflet-control-attribution) {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--glass-muted);
+  border-top-left-radius: 8px;
+}
+
+.map:global(.leaflet-container) :global(.leaflet-control-attribution) a {
+  color: var(--glass-text);
+}

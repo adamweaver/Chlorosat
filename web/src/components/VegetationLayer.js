@@ -6,7 +6,9 @@
  *               PNGs are EPSG:3857, so they line up with the map (docs/ARCHITECTURE.md).
  *               Planned props: { region, methodId, year, opacity } (opacity fixed ~0.7 until
  *               the slider, CS-035)
- *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver */
+ *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
+ *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · MapView now passes { region, methodId, year, opacity }
+ *               (year already rounded, opacity 0-1). methodId is still a UI id; see the TODO in MethodToggle.js. */
 export default function VegetationLayer() {
   return null;
 }
