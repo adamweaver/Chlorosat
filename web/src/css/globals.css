@@ -1,0 +1,165 @@
+/* Global styles + design tokens. Rules: docs/PRINCIPLES.md#design
+   Brand greens are ACCENTS ONLY (header, buttons, links, focus). Backgrounds/text stay neutral.
+   Map data colors live in manifest.json (from the pipeline), NOT here.
+   Component styles live in src/css/*.module.css. This file only holds tokens,
+   base element styles, and the two shared classes used across components: .glass and .range.
+   TODO(CS-014, Lucas): refine tokens, add spacing/type scale, dark mode if wanted. */
+
+:root {
+  /* Brand (branding/branding-sheet.png) */
+  --brand-900: #15503a;
+  --brand-600: #2e9e63;
+  --brand-400: #56c27f;
+  --brand-200: #a8e0be;
+
+  /* Neutrals */
+  --bg: #ffffff;
+  --surface: #f5f6f5;
+  --border: #d9dcda;
+  --text: #1c1f1d;
+  --text-muted: #5a615c;
+
+  --radius: 8px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Glass overlay (dark, see-through controls floating over the map) */
+  --glass-bg: rgba(18, 22, 20, 0.62);
+  --glass-bg-hover: rgba(255, 255, 255, 0.1);
+  --glass-bg-raised: rgba(44, 50, 47, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-blur: blur(14px) saturate(160%);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --glass-text: #f3f6f4;
+  --glass-muted: rgba(243, 246, 244, 0.75);
+  --on-accent: #0b1f15;
+  --warn: #f2c14e;
+
+  --gap: 12px;
+  --z-overlay: 1000;
+
+  /* Site header: solid black bar, in normal flow (not floating over the map). */
+  --header-bg: #0a0c0b; /* Near-black, with a trace of the brand green. */
+  --header-text: #f4f7f5; /* Primary label on the bar. */
+  --header-muted: rgba(244, 247, 245, 0.64); /* Unselected nav. Still AA on --header-bg. */
+  --header-line: rgba(255, 255, 255, 0.1); /* Hairline under the bar. */
+  --header-hover: rgba(255, 255, 255, 0.07); /* Quiet wash on hover. */
+  --header-press: rgba(255, 255, 255, 0.12); /* Slightly stronger while the link is held down. */
+  --header-h: 3.25rem; /* 52px. Tall enough to tap, short enough to leave the map the star. */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--brand-900);
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand-400);
+  outline-offset: 2px;
+}
+
+/* ---------- Page layout ---------- */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh; /* dvh is device height */
+}
+
+/* ---------- Shared: glass surface ---------- */
+/* glass-inspired polymorphism for each floating panel */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: var(--glass-text);
+}
+
+/* button effects for the glass (buttons inside a glass panel, and buttons that ARE glass) */
+.glass button,
+button.glass {
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms; /* hover effect */
+}
+
+.glass button {
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
+/* ---------- Shared: glass range slider (year + opacity) ---------- */
+.range {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Track (the line). Chrome/Safari and Firefox need separate rules. */
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.range::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--brand-400);
+}
+
+/* Thumb (the handle you drag) */
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--brand-400);
+  border: 3px solid var(--glass-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--brand-400);
+  border: 3px solid var(--glass-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.range:focus-visible {
+  outline-offset: 4px;
+}
+
+/* Respect "reduce motion" in the OS settings */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

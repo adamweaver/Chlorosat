@@ -1,0 +1,59 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 380px;
+  max-width: calc(100vw - 2 * var(--gap));
+  height: 40px;
+  padding: 0 2px 0 16px;
+  border-radius: 999px;
+}
+
+.bar:focus-within {
+  outline: 3px solid var(--brand-400);
+  outline-offset: 2px;
+}
+
+.bar input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--glass-text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.bar input::placeholder {
+  color: var(--glass-muted);
+}
+
+.bar input::-webkit-search-cancel-button {
+  filter: invert(1);
+}
+
+.bar button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.bar button:hover {
+  background: var(--glass-bg-hover);
+}
+
+/* Phones: full width; 16px text so iOS doesn't zoom in on tap */
+@media (max-width: 640px) {
+  .bar {
+    width: 100%;
+  }
+
+  .bar input {
+    font-size: 1rem;
+  }
+}

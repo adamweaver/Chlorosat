@@ -1,0 +1,76 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
+}
+
+/* Top-left stack: year slider, opacity, single-source notice */
+.panelStack {
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, calc(100% - 44px - 3 * var(--gap)));
+}
+
+/* Top-right: search bar, then the round tool buttons under it */
+.rightStack {
+  position: absolute;
+  top: var(--gap);
+  right: var(--gap);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.rightStack > * {
+  pointer-events: auto;
+}
+
+.toolStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zoom {
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.zoom button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.zoom button + button {
+  border-top: 1px solid var(--glass-border);
+}
+
+.zoom button:hover {
+  background: var(--glass-bg-hover);
+}
+
+/* Phones: no room for search + left cards side by side, so search spans the top */
+@media (max-width: 640px) {
+  .rightStack {
+    left: var(--gap);
+  }
+
+  .panelStack {
+    top: calc(var(--gap) + 40px + 8px);
+  }
+}

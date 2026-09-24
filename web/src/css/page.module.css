@@ -1,0 +1,7 @@
+.mapPage {
+  flex: 1; /* Fills whatever height the header does not use. */
+  min-height: 0; /* Allows the map to shrink to that leftover height. */
+  display: flex;
+  flex-direction: column; /* The map grows downward, under the header. */
+  position: relative; /* The overlay positions itself inside this box. */
+}

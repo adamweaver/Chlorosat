@@ -3,11 +3,14 @@
 // Browsers cache these files, and nginx serves them with no computing (decision D1).
 
 /* [AI] Purpose: Find out which regions, methods, and years exist, and how to color them.
- *      Does:    STUB. Planned: fetch("/data/manifest.json") -> parsed JSON.
- *      Context: TODO(CS-012, David). Handle a failed fetch (show an error, don't crash).
- *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver */
+ *      Does:    fetch("/data/manifest.json") -> parsed JSON. Throws if the request fails.
+ *      Context: CS-012. Callers catch the error and show a message (see MapApp.js).
+ *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
+ *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · implemented the fetch */
 export async function loadManifest() {
-  throw new Error("TODO(CS-012): loadManifest not implemented");
+  const res = await fetch("/data/manifest.json");
+  if (!res.ok) throw new Error(`manifest.json failed to load (${res.status})`);
+  return res.json();
 }
 
 /* [AI] Purpose: Get the numbers for one region + method + year.

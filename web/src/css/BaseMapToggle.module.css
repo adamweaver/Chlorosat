@@ -1,0 +1,33 @@
+/* Base map buttons (bottom-right, each its own glass tile) */
+.group {
+  position: absolute;
+  right: var(--gap);
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+button.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 76px;
+  padding: 10px 4px 8px;
+  border-radius: 16px;
+  color: var(--glass-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+button.tile:hover {
+  background: var(--glass-bg-raised);
+  color: var(--glass-text);
+}
+
+button.tile[aria-pressed="true"] {
+  background: var(--brand-400);
+  color: var(--on-accent);
+  font-weight: 600;
+}

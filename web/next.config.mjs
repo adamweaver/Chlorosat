@@ -9,6 +9,10 @@ const nextConfig = {
 
   // /about -> /about/index.html, so any static file server finds the page.
   trailingSlash: true,
+
+  // Do not write web/AGENTS.md and web/CLAUDE.md on `next dev`.
+  // The real rules live at the repo root.
+  agentRules: false,
 };
 
 export default nextConfig;

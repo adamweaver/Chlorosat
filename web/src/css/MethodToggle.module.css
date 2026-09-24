@@ -1,0 +1,99 @@
+/* View settings button + menu (top-right) */
+.anchor {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 8px);
+  width: min(280px, calc(100vw - 44px - 3 * var(--gap) - 8px));
+  padding: 6px;
+  border-radius: 16px;
+  background: rgba(18, 22, 20, 0.94);
+}
+
+.menu fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.menu legend {
+  padding: 6px 10px 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--glass-muted);
+}
+
+.option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.option input {
+  grid-row: span 2;
+  margin: 3px 0 0;
+  accent-color: var(--brand-400);
+}
+
+.option strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.option small {
+  font-size: 0.75rem;
+  color: var(--glass-muted);
+}
+
+.option small.warn {
+  color: var(--warn);
+}
+
+.option:hover {
+  background: var(--glass-bg-hover);
+}
+
+.option:has(input:checked) {
+  background: rgba(86, 194, 127, 0.16);
+}
+
+/* Single-source notice (top-left stack) */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 14px;
+  font-size: 0.8125rem;
+}
+
+.notice svg {
+  flex: none;
+  color: var(--warn);
+}
+
+.notice p {
+  flex: 1;
+  margin: 0;
+}
+
+.notice button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.notice button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
