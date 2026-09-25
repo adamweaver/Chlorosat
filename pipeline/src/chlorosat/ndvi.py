@@ -9,11 +9,14 @@ import numpy as np
 
 
 # [AI] Purpose: The core calculation of the infrared method.
-#      Does:    STUB. Planned: element-wise (nir - red) / (nir + red) as float32.
-#               Where nir + red == 0, return NaN (no data) instead of crashing.
-#      Context: TODO(CS-011). Inputs are same-shape arrays of surface reflectance. Apply the
-#               source's scale/offset BEFORE calling this (Sentinel-2 has a +1000 offset from
-#               2022 on; see docs/research/data-sources.md). Tests: tests/test_ndvi.py.
-#      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
+#      Does:    (nir - red) / (nir + red) as float32. NaN where nir + red == 0 (no data).
+#      Context: CS-011. Inputs are surface reflectance with scale/offset already applied
+#               (docs/research/data-sources.md). Tests: tests/test_ndvi.py.
+#      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter
 def compute_ndvi(red: np.ndarray, nir: np.ndarray) -> np.ndarray:
-    raise NotImplementedError("TODO(CS-011): compute_ndvi")
+    red = np.asarray(red, dtype=np.float32)
+    nir = np.asarray(nir, dtype=np.float32)
+    total = nir + red
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ndvi = np.where(total == 0, np.nan, (nir - red) / total)
+    return ndvi.astype(np.float32)
