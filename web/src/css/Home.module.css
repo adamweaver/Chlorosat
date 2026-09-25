@@ -1,0 +1,149 @@
+/* ---------- Home page (/) ----------
+   Dark "night sky", the name, the animated satellite, and the Open map button.
+   Ported from the old web/landing/index.html (CS-038). Brand greens are accents on a neutral
+   dark gray, as in docs/PRINCIPLES.md#design. */
+.home {
+  flex: 1; /* Fills the space below the header (body is a flex column). */
+  position: relative; /* The stars position themselves inside this box. */
+  overflow: hidden; /* Stars never cause scrollbars. */
+  display: grid;
+  place-items: center; /* Centers the stack both ways. */
+  padding: 2rem 1rem;
+  background: #2a2a2a; /* Dark gray from the original landing page. */
+  color: var(--brand-200);
+}
+
+/* ---------- Stars (Stars.js) ---------- */
+.stars {
+  position: absolute;
+  inset: 0; /* Cover the whole home area, behind the stack. */
+}
+
+.stars span {
+  position: absolute; /* left/top come from Stars.js. */
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--brand-200);
+  opacity: 0.15;
+  animation: twinkle 4s ease-in-out infinite; /* Delay + duration vary per star (Stars.js). */
+}
+
+/* ---------- Name, satellite, button ---------- */
+.stack {
+  position: relative; /* Sits above the stars. */
+  width: min(90vw, 560px);
+  text-align: center;
+}
+
+.name {
+  margin: 0;
+  font-size: min(15vw, 84px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--brand-600);
+  user-select: none;
+}
+
+.satellite {
+  display: block;
+  width: min(60vw, 42vh, 300px);
+  height: auto;
+  margin: 4vh auto 3vh;
+  animation: drift 7s ease-in-out infinite;
+}
+
+.leaf {
+  transform-box: fill-box; /* Rotate around the leaf itself, not the whole drawing. */
+  transform-origin: 50% 100%; /* Pivot at the stem. */
+  animation: sway 3.5s ease-in-out infinite;
+}
+
+.arc {
+  animation: beam 2.4s ease-in-out infinite;
+}
+
+/* The three arcs pulse one after another, like a signal going out. */
+.arc:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.arc:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* "Open map": replaces the old "Work in progress" line, in the same letter-spaced style. */
+.openMap {
+  display: inline-block;
+  /* Extra 0.25em on the left balances the letter-spacing after the last letter. */
+  padding: 0.9em 1.75em 0.9em 2em;
+  border: 1px solid var(--brand-400);
+  border-radius: 999px; /* Pill shape. */
+  color: var(--brand-400);
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 150ms, color 150ms;
+}
+
+.openMap:hover {
+  background: var(--brand-400);
+  color: var(--on-accent); /* Dark text on the green fill (high contrast). */
+}
+
+.openMap:focus-visible {
+  outline-offset: 4px;
+}
+
+/* ---------- Animations ---------- */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes beam {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* "Reduce motion" in the OS settings: everything stands still. */
+@media (prefers-reduced-motion: reduce) {
+  .stars span,
+  .satellite,
+  .leaf,
+  .arc {
+    animation: none;
+  }
+}

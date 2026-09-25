@@ -11,9 +11,11 @@ import styles from "@/css/Header.module.css";
  *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · glass pill with logo
  *      Edited:  2026-09-23 · Grok 4.7 · full-width black bar; dropped the floating pill
- *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · CSS module */
+ *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · CSS module
+ *      Edited:  2026-09-24 · Claude Opus 5.5 (for Adam) · Map link -> /map/; home (/) marks no link (CS-038) */
 export default function Header() {
   const path = (usePathname() || "/").replace(/\/$/, "") || "/"; // "/about/" and "/about" are the same page.
+  const onMap = path === "/map";
   const onAbout = path === "/about";
 
   return (
@@ -24,7 +26,7 @@ export default function Header() {
           <span>Chlorosat</span>
         </Link>
         <nav aria-label="Main">
-          <Link href="/" aria-current={onAbout ? undefined : "page"}>
+          <Link href="/map/" aria-current={onMap ? "page" : undefined}>
             Map
           </Link>
           <Link href="/about/" aria-current={onAbout ? "page" : undefined}>
