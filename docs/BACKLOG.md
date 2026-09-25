@@ -9,7 +9,6 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | CS-001 | Finalize feature scope & backlog priorities | M | Lucas | 1→2 | |
 | CS-002 | Data source research → pick source (D7) | M | Kevin | 1→2 | |
 | CS-003 | NDVI method research write-up | M | David | 1→2 | |
-| CS-004 | Tech stack research write-up | M | Carter | 1→2 | |
 | CS-005 | Repo scaffold, docs, CI | M | Adam | 1→2 | |
 | CS-010 | Pipeline: fetch bands (RGB + NIR + cloud mask) for a region + year | M | Kevin | 2 | |
 | CS-011 | Pipeline: NDVI → colored PNG → export + manifest | M | Carter | 2 | |
@@ -48,3 +47,4 @@ Priority: **M**ust / **S**hould / **C**ould. Draft seed list, **Lucas to finaliz
 | ID | Item | Owner | Sprint | PR |
 |---|---|---|---|---|
 | CS-000 | Repo created, README, branding assets | Team | 1 | #2 |
+| CS-004 | Tech stack research write-up | Carter | 1→2 | |
