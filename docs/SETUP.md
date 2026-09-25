@@ -13,8 +13,8 @@ Check: `git --version`, `node --version` (v22.x), `uv --version`.
 
 ## 2. Clone
 ```bash
-git clone https://github.com/adamweaver/VegetationMonitoring.git
-cd VegetationMonitoring
+git clone https://github.com/adamweaver/Chlorosat.git
+cd Chlorosat
 ```
 
 ## 3. Pipeline (Python)

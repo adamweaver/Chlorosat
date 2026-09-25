@@ -17,6 +17,27 @@ Team: Group E, CS3203-001 (Adam, Carter, David, Kevin, Lucas). Students using AI
 8. **Major changes or decisions:** ask the user whether the team has approved them first (e.g. new dependency, changing the architecture, data contract, or deploy setup).
 9. **Write for learners.** Well-commented, simple, readable code. Prefer clear over clever.
 10. **Tag AI-written code** with the comment block below.
+11. **Protect secrets.** Follow [Security & secrets](#security--secrets) in every file, commit, PR, and workflow.
+
+## Security & secrets
+This repo is **public**. Everything in it can be seen and copied: files, full history, commit messages, PR/issue text, and GitHub Actions logs. Deleting something later does **not** undo a leak.
+
+**Never put these in the repo, a commit message, a PR/issue, a CI log, or a screenshot:**
+- Passwords, API tokens, private keys (SSH or other), `.env` files.
+- **The VPS IP address** or anything else that points at Adam's server: `known_hosts` files, SSH config, usernames/paths beyond what [DEPLOYMENT.md](docs/DEPLOYMENT.md) already shows. Cloudflare hides the IP; a leaked IP lets attackers skip Cloudflare and also exposes Adam's personal site.
+
+**Instead:**
+- Write `<host>` (or `<you>`, `<key>`) in docs, examples, and scripts.
+- Scripts read targets from environment variables and have **no default** that contains a real address (see `deploy/deploy.sh`).
+- Workflows use GitHub secrets (`${{ secrets.VPS_HOST }}` etc.). They live only in the GitHub `production` environment, which only Adam manages.
+
+**Workflows (logs are public):**
+- `permissions: contents: read` unless more is truly needed. Never `pull_request_target`.
+- Never `echo`/`cat` a secret, never `set -x` near one, no `-v` on ssh/rsync.
+- Verify the server with `VPS_KNOWN_HOSTS`. **Never** `StrictHostKeyChecking=no`.
+- Required checks `pipeline` + `web` must always report: no workflow-level `paths:` filter in `ci.yml` (skip per job instead).
+
+**Agents:** before suggesting a commit, check the staged diff for anything above. Don't read, print, or copy `~/.ssh/*`, `.env`, or secret values unless the user asks. If you find a secret or an IP address in the repo, **stop and tell the user** (and Adam). Details: [DEPLOYMENT.md → Security](docs/DEPLOYMENT.md#security).
 
 ## AI comment block
 Put this **above** every function or notable sub-function an agent writes.
@@ -50,9 +71,11 @@ When a human later changes AI-written code, add a line: `Edited: YYYY-MM-DD · <
 | `pipeline/regions.toml` | Region list (id, name, bounding box). New region = new entry. |
 | `pipeline/src/chlorosat/methods.py` | Detection methods + their class colors (single source of truth; copied into `manifest.json`). |
 | `web/` | Next.js static site (JavaScript). Map UI with Leaflet. |
+| `web/landing/` | Placeholder landing page (plain HTML, live on the VPS now). Will be ported into the Next.js home page (D11). |
 | `web/public/data/` | Pipeline output the site reads (committed). Shape defined by the data contract. |
 | `web/out/` | Built site (gitignored). **This folder is what goes on the VPS.** |
 | `deploy/` | nginx site config + manual deploy script (server side is **Adam only**). |
+| `.github/workflows/` | `ci.yml` (lint, tests, build on every PR). `deploy.yml` (CS-024, planned): auto-deploy on merge. Logs are public. |
 | `docs/` | Principles, architecture, backlog, setup, deployment, research, sprint plans. |
 | `branding/` | Logo + color palette. |
 
@@ -71,7 +94,7 @@ npm run build                     # static build -> web/out/
 ```
 
 ## Conventions
-- Branches: `feature/<name>`, `bugfix/<name>`. PR into `main`, 1+ review, CI must pass.
+- Branches: `feature/<name>`, `bugfix/<name>`. PR into `main`, 1+ review, CI must pass (enforced by a ruleset on `main`: no direct pushes, no force pushes).
 - Commits: short and clear (`Add NDVI calculation`), not `added stuff`.
 - **Never commit raw satellite data** (`pipeline/data/`). Only small processed output in `web/public/data/`.
 - The site is a static export: pages are built once at build time. No API routes, and nothing that needs a running server (the VPS only serves files).

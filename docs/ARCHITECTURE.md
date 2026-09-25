@@ -46,12 +46,18 @@ They **will disagree sometimes**, e.g. stressed plants that still look green, ar
 | Path | Job |
 |---|---|
 | `app/layout.js` | Page shell (html, header, fonts). |
-| `app/page.js` | Main map page. |
+| `app/page.js` | Home page = the map page for now (renders `MapApp`). Moves to `app/map/page.js` with CS-038 (D11). |
 | `app/about/page.js` | Plain-language "what is this / how to read it / why the methods differ". |
-| `components/MapView.js` | Leaflet map. **Client-only** (Leaflet needs `window`), loaded with `next/dynamic` + `ssr: false` from a `"use client"` component (e.g. `MapApp.js`, which also holds page state). |
-| `components/VegetationLayer.js` | Draws one method + year PNG (or a change PNG) with `ImageOverlay` at the region bounds. |
-| `components/MethodToggle.js`, `YearSelector.js`, `Legend.js`, `StatsPanel.js`, `Header.js` | UI controls. |
-| `lib/data.js` | Fetch `manifest.json` + stats JSON. |
+| `components/MapApp.js` | `"use client"` wrapper: loads `manifest.json`, holds the map settings (view/method, year, opacity, base map), passes them down. |
+| `components/MapView.js` | Leaflet map. **Client-only** (Leaflet needs `window`), loaded with `next/dynamic` + `ssr: false` from `MapApp`. Locked to the region bounds. |
+| `components/MapOverlay.js` | Lays out the floating "glass" controls on top of the map. |
+| `components/VegetationLayer.js` | Draws one method + year PNG (or a change PNG) with `ImageOverlay` at the region bounds. **Stub.** |
+| `components/MethodToggle.js`, `YearSelector.js`, `OpacitySlider.js`, `BaseMapToggle.js`, `SearchBar.js`, `Legend.js`, `StatsPanel.js`, `Header.js` | UI controls. Most update state but don't change the map yet; `StatsPanel` is a stub. |
+| `components/Icon.js`, `IconButton.js` | Shared inline-SVG icons + icon-only button. |
+| `css/` | `globals.css` (design tokens, shared `.glass` / `.range`) + one CSS Module per component. |
+| `lib/data.js` | Fetch `manifest.json` (done) + stats JSON (stub). |
+
+`web/landing/` (outside `src/`, not built by Next) holds the plain-HTML placeholder page that's live now. It will become the home page (D11). See [web/landing/README.md](../web/landing/README.md).
 
 ## Data contract
 The **only** link between pipeline and website. Both sides must follow it. **Changing it = major change** (team approval).
@@ -87,9 +93,9 @@ Example: `okc-norman/ndvi/2024.png`, `okc-norman/visible/change/2019_2024.json`.
   "regions": [{
     "id": "okc-norman",
     "name": "Oklahoma City & Norman, OK",
-    "bounds": [[35.13, -97.75], [35.7, -97.2]],  // [[south, west], [north, east]], Leaflet order (lat, lng)
+    "bounds": [[35.13, -97.86], [35.74, -97.2]], // [[south, west], [north, east]], Leaflet order (lat, lng)
                                                  // = the PNGs' exact extent (from render.py), not just regions.toml
-    "center": [35.415, -97.475],                 // midpoint of bounds
+    "center": [35.435, -97.53],                  // midpoint of bounds
     "zoom": 10,                                  // from regions.toml
     "layers": {                                  // per method: which files exist (can differ by method)
       "ndvi":    { "years": [2019, 2024], "changes": [[2019, 2024]] },
@@ -129,7 +135,7 @@ Status `Proposed` = suggested during outlining; needs team OK. Change to `Accept
 |---|---|---|---|
 | D1 | Static site + offline pipeline (no backend server) | Tiny VPS; cheap, fast, reliable | Proposed 2026-09-22 |
 | D2 | Colored PNG overlays (Leaflet `ImageOverlay`), not Leaflet.heat | Accurate per-pixel values; light on client. Heatmaps show point density, not values | Proposed 2026-09-22 |
-| D3 | CI builds + auto-deploys `web/out/` via rsync with a locked-down key (rrsync: write-only to `/var/www/chlorosat`); `deploy/deploy.sh` fallback | Meets CI/CD; no built files in git; key can't touch the rest of the VPS | Proposed 2026-09-22 (key lock: Accepted by VPS owner) |
+| D3 | CI builds + auto-deploys `web/out/` via rsync with a locked-down key (rrsync: write-only to `/var/www/chlorosat.com`); `deploy/deploy.sh` fallback | Meets CI/CD; no built files in git; key can't touch the rest of the VPS | Proposed 2026-09-22 (key lock: Accepted by VPS owner) |
 | D4 | nginx (already on Adam's VPS) + certbot for HTTPS | Existing server; Chlorosat is one extra site block | Accepted 2026-09-22 (VPS owner) |
 | D5 | JavaScript (not TypeScript); uv for Python (venv+pip fallback) | Lower learning curve | Proposed 2026-09-22 |
 | D6 | Processed output committed to `web/public/data/`; raw data never committed | CI can build without running the pipeline | Proposed 2026-09-22 |
@@ -137,3 +143,5 @@ Status `Proposed` = suggested during outlining; needs team OK. Change to `Accept
 | D8 | Two detection methods: infrared (NDVI, default) + visible light, shown separately with differences explained | Team intent; visible light works on any color imagery, NDVI measures plant health | Team intent 2026-09-22; confirm details |
 | D9 | Visible-light method: which index + which imagery | See [research/visible-detection.md](research/visible-detection.md) | **Open** (Carter, CS-026) |
 | D10 | Hosting is on Adam's personal VPS (shared with his personal site). All server-side work is **Adam only**: VPS, nginx, DNS/domain, HTTPS, deploy keys, GitHub settings/secrets | Adam owns the server; protects his personal site | Accepted 2026-09-22 (VPS owner) |
+| D11 | Landing page becomes the home page (`/`); the map (at `/` now, `src/app/page.js`) moves to its own page (e.g. `/map/`), opened with a button | First load stays light (no Leaflet/overlays until asked), which helps low-end devices. Source: `web/landing/` (CS-038) | Proposed 2026-09-24 |
+| D12 | Repo is **public**. Secrets live only in the GitHub `production` environment; the VPS IP counts as a secret (placeholders like `<host>` in the repo) | Professor's request (peer reviews); free branch protection + environments. Cloudflare hides the IP, so leaking it would bypass that. See [DEPLOYMENT.md → Security](DEPLOYMENT.md#security) | Accepted 2026-09-24 (professor's request; VPS owner) |

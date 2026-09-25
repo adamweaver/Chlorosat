@@ -10,6 +10,13 @@ Thumbs.db
 .env.*
 *.pem
 *.key
+# ssh-keyscan output: contains the server address
+*known_hosts*
+# SSH private keys (the .pub halves are harmless, but keep them out too)
+id_rsa*
+id_ecdsa*
+id_ed25519*
+chlorosat-ci*
 
 # --- Python / pipeline ---
 __pycache__/

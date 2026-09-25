@@ -9,7 +9,7 @@
 - **CI:** every PR is automatically linted, tested, and built on GitHub.
 - **AI rules** in `AGENTS.md`. AI-written code gets an `[AI]` comment block.
 - **Moved:** `Branding Assets/` → `branding/`, Scrum PDF → `docs/scrum/sprint-1-plan.pdf`.
-- **Repo URL changed** to https://github.com/adamweaver/VegetationMonitoring
+- **Repo URL changed** to https://github.com/adamweaver/Chlorosat
 
 ## How it works (big picture)
 1. **Pipeline** (Python, runs on our laptops): satellite images → vegetation layers → colored PNGs + stats JSON, saved in `web/public/data/`.
@@ -52,7 +52,7 @@ Pipeline output (PNGs/JSON) gets committed through a PR, just like code. Raw sat
 
 ## Setup (everyone, ~15 min)
 - [ ] Install **Git**, **Node.js 22**, **uv** (links in `docs/SETUP.md`). If you use Fedora's `dnf` uv, also run `uv python install 3.12`.
-- [ ] Clone the repo. If you already have it: `git remote set-url origin https://github.com/adamweaver/VegetationMonitoring.git`
+- [ ] Clone the repo. If you already have it: `git remote set-url origin https://github.com/adamweaver/Chlorosat.git`
 - [ ] Pipeline: `cd pipeline && uv sync && uv run pytest` (expect 4 passed, 10 skipped)
 - [ ] Website: `cd web && npm ci && npm run dev`, then open http://localhost:3000
 - [ ] Read your Sprint 2 task and `docs/PRINCIPLES.md`.
@@ -69,6 +69,6 @@ Pipeline output (PNGs/JSON) gets committed through a PR, just like code. Raw sat
 | 6 | Years + season to compare | 2019–2025, Jun–Aug | Kevin + David | Sprint 3 start |
 | 7 | "Change" threshold | ±0.1 (per method) | David + Carter | Sprint 3 |
 | 8 | Week numbering: we assumed week 5 = Sep 21–27, which puts end of Sprint 3 (Oct 14) at **week 8** | Usable milestone moved to ~Oct 7 (week 7) | Team | Now |
-| 9 | Is the repo public? (Free branch protection needs it; otherwise Adam uses the Student Pack's GitHub Pro.) | ? | Adam | Sprint 2 |
+| 9 | Is the repo public? | ✅ **Yes** (2026-09-24, professor's request). `main` is protected; never commit secrets or server addresses ([rules](AGENTS.md#security--secrets)) | Adam | Done |
 | 10 | Where standups happen (which chat) | ? | Team | Now |
 | 11 | Are the Sprint 2/3 tasks + hours realistic? (Adam and Kevin swapped Sprint 2 lanes because of the server rule; Carter has two smaller Sprint 3 tasks) | `docs/scrum/` | Team | Sprint 2 planning |
