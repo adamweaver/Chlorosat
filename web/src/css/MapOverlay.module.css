@@ -9,7 +9,7 @@
   pointer-events: auto;
 }
 
-/* Top-left stack: year slider, opacity, single-source notice */
+/* Top-left stack: early-preview notice, year slider, opacity, single-source notice */
 .panelStack {
   position: absolute;
   top: var(--gap);
