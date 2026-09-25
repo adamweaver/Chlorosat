@@ -15,9 +15,9 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
                                          manual fallback: deploy/deploy.sh (run by Adam)
 ```
 
-**Right now:** a hand-deployed placeholder page is live. Its source is [web/landing/](../web/landing/). The first auto-deploy replaces it with `web/out/` (`rsync --delete`), whose home page is currently the map (PR #4). Port the placeholder into the home page first (CS-038 / D11) if it should stay.
+**Right now:** every merge to `main` deploys automatically. The home page (`/`) is the landing page with an **Open map** button; the map is at `/map/` (CS-038, D11). Watch a deploy in the repo's **Actions** tab → **Deploy**.
 
-## Status (updated 2026-09-24)
+## Status (updated 2026-09-24, #6)
 | Step | Status |
 |---|---|
 | Domain, DNS, HTTPS, www redirect | ✅ Done |
@@ -25,9 +25,9 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 | Branch protection on `main` | ✅ Done (ruleset, see [below](#branch-protection-main)) |
 | Repo security settings (public repo) | ✅ Fork-PR approval, secret scanning, push protection |
 | `deploy/chlorosat.nginx.conf` = real config | ✅ Done (live on the VPS 2026-09-24) |
-| `deploy/deploy.sh` | ✅ Written + tested locally (CS-013); not yet run against the VPS |
+| `deploy/deploy.sh` | ✅ Done (CS-013); `deploy.yml` runs it too |
 | GitHub `production` environment + secrets | ✅ Done (`main` only; `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`) |
-| `deploy.yml` | ⏳ Not started (CS-024) |
+| `deploy.yml` | ✅ Written (CS-024, #6). ⏳ First run happens when #6 merges |
 | nginx cache headers + gzip check | ✅ Cache headers live (visible after the first real deploy); gzip not needed (Cloudflare compresses) |
 
 ## One-time server setup (Adam, Sprint 2, CS-013)
@@ -64,14 +64,13 @@ DEPLOY_TARGET=chlorosat-deploy@<host>: DEPLOY_SSH_KEY=~/.ssh/chlorosat-ci ./depl
 - `DEPLOY_SSH_KEY` (optional): the locked key. Leave it out to use your normal SSH setup.
 - `DRY_RUN=1` (optional): change nothing, list changes only.
 - Safety: it stops if the build fails or `web/out/index.html` is missing, so `--delete` can't wipe the live site with an empty folder.
-- ⚠ Until CS-038 is done, a real run replaces the landing page with the map.
 
 ## Automatic deploy (Sprint 3): `.github/workflows/deploy.yml`
-**Adam writes the workflow (CS-024, taken over from Carter 2026-09-24) and sets up the GitHub side (CS-027).** A teammate reviews the PR (branch protection requires 1 approval).
-1. Trigger: `push` to `main` (i.e. after a PR merge) + `workflow_dispatch` (manual run button).
+**Adam wrote the workflow (CS-024, taken over from Carter) and set up the GitHub side (CS-027).** Any change to it needs Adam's review.
+1. Trigger: `push` to `main` (i.e. after a PR merge) + `workflow_dispatch` (**Run workflow** button: Actions → Deploy, e.g. to redeploy after a rollback).
 2. Job uses `environment: production`, `permissions: contents: read`, and `concurrency: { group: deploy, cancel-in-progress: false }` (two quick merges never rsync at the same time).
-3. Checkout → setup Node 22 → `npm ci` → `npm run build` (in `web/`). Same action versions as `ci.yml`.
-4. Write the key (`chmod 600`) and known_hosts from secrets → `rsync -az --delete --chmod=D755,F644 web/out/ chlorosat-deploy@${{ secrets.VPS_HOST }}:`
+3. Checkout → setup Node 22 (with npm cache). Same action versions as `ci.yml`.
+4. Write the key (`chmod 600`) and known_hosts from secrets (passed in through `env:`), then run **`deploy/deploy.sh`** with `DEPLOY_TARGET=chlorosat-deploy@$VPS_HOST:`. The script does `npm ci` + `npm run build` + `rsync -az --delete --chmod=D755,F644 web/out/ …`, so manual and automatic deploys behave the same. The key file is deleted at the end.
 5. Follow the [workflow rules](#security) (no printing secrets, no `-v`, no `StrictHostKeyChecking=no`).
 6. **Adam** creates a GitHub **Environment** named `production` (Settings → Environments):
    - Deployment branches: `main` only. So workflows from PRs or other branches can't read the secrets.

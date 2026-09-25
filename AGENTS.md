@@ -70,12 +70,11 @@ When a human later changes AI-written code, add a line: `Edited: YYYY-MM-DD · <
 | `pipeline/` | Python (uv). Downloads satellite bands → vegetation index per method → colored PNG + stats JSON. Runs on laptops, **never on the VPS**. |
 | `pipeline/regions.toml` | Region list (id, name, bounding box). New region = new entry. |
 | `pipeline/src/chlorosat/methods.py` | Detection methods + their class colors (single source of truth; copied into `manifest.json`). |
-| `web/` | Next.js static site (JavaScript). Map UI with Leaflet. |
-| `web/landing/` | Placeholder landing page (plain HTML, live on the VPS now). Will be ported into the Next.js home page (D11). |
+| `web/` | Next.js static site (JavaScript). Home page `/` (light, no Leaflet: D11), map `/map/` (Leaflet), about `/about/`. |
 | `web/public/data/` | Pipeline output the site reads (committed). Shape defined by the data contract. |
 | `web/out/` | Built site (gitignored). **This folder is what goes on the VPS.** |
 | `deploy/` | nginx site config + manual deploy script (server side is **Adam only**). |
-| `.github/workflows/` | `ci.yml` (lint, tests, build on every PR). `deploy.yml` (CS-024, planned): auto-deploy on merge. Logs are public. |
+| `.github/workflows/` | `ci.yml` (lint, tests, build on every PR). `deploy.yml`: deploys every merge to `main` (runs `deploy/deploy.sh`). Logs are public. |
 | `docs/` | Principles, architecture, backlog, setup, deployment, research, sprint plans. |
 | `branding/` | Logo + color palette. |
 
