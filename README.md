@@ -1,6 +1,6 @@
 # Chlorosat: Vegetation Monitoring (CS3203)
 
-Chlorosat shows **how green the Oklahoma City area is, and how that's changing**, using satellite data drawn over a normal map. It's built for people who aren't map experts: policymakers, environmental activists and scientists, and homebuyers.
+Chlorosat shows how green the Oklahoma City area is, and how that's changing, using satellite data drawn over a normal map. It's built for people who aren't map experts: policymakers, environmental activists and scientists, and homebuyers.
 
 **Live site:** [chlorosat.com](https://chlorosat.com) · **Tasks:** [docs/BACKLOG.md](docs/BACKLOG.md) · **Team:** Group E, CS3203-001
 
@@ -44,8 +44,9 @@ Why two methods, and who it's for: [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 Early development (end of Sprint 2). **Working now** (live on [chlorosat.com](https://chlorosat.com)):
 
 - **Home page** with an **Open map** button. The map page loads only when asked, so the first page stays light.
-- **Map page:** Leaflet map locked to the region, with the control layout: search bar, year slider, vegetation opacity, View settings, legend, zoom, Satellite/Map buttons. Most controls **don't change the map yet** (they wait for the data layers).
+- **Map page** (UI by Lucas, #4): Leaflet map locked to the region, with the control layout: search bar, year slider, vegetation opacity, View settings, legend, zoom, Satellite/Map buttons. Most controls **don't change the map yet** (they wait for the data layers), and the page says so.
 - **Auto-deploy:** every merge to `main` goes live within minutes.
+- **Research:** tech stack and the visible-light method (VARI) written up by Carter (#6); NDVI and data sources in progress. See [docs/research/](docs/research/).
 
 **Not yet:** real vegetation overlays, satellite tiles, stats, compare mode, About page content. Who's doing what, and when: [docs/BACKLOG.md](docs/BACKLOG.md).
 

@@ -26,7 +26,7 @@ Decisions are logged in [ARCHITECTURE.md](../ARCHITECTURE.md#decision-log).
 |---|---|---|---|
 | **Next.js, static export** (`output: "export"`) | File-based routing (`/`, `/about/`, later `/map/`), React components for the controls, builds to plain HTML/JS/CSS. Huge docs | Big framework for a small site; must avoid server-only features (API routes, image optimizer, SSR), which would need Node on the VPS and break D1 | **Chosen.** Pages + components without a Node server |
 | Vite + React (single page) | Lighter build, simpler config | One page only unless we add a router; no page metadata conventions | Close second. Components are plain React, so switching later is cheap |
-| Plain HTML + JS, no framework | Zero build step, smallest possible | Map controls (year slider, method toggle, legend, stats) share state; hand-wiring that gets messy fast | Fine for the placeholder landing page ([web/landing/](../../web/landing/)), not for the app |
+| Plain HTML + JS, no framework | Zero build step, smallest possible | Map controls (year slider, method toggle, legend, stats) share state; hand-wiring that gets messy fast | Fine for the placeholder landing page (the old `web/landing/`, since ported into the Next.js home page, CS-038), not for the app |
 
 **JavaScript, not TypeScript (D5):** types would catch more bugs, but the compile step and type errors slow down teammates still learning React. The data contract in ARCHITECTURE.md covers most of what types would give us at this size.
 

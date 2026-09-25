@@ -17,7 +17,7 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 
 **Right now:** every merge to `main` deploys automatically. The home page (`/`) is the landing page with an **Open map** button; the map is at `/map/` (CS-038, D11). Watch a deploy in the repo's **Actions** tab → **Deploy**.
 
-## Status (updated 2026-09-24, #6)
+## Status (updated 2026-09-24, #7)
 | Step | Status |
 |---|---|
 | Domain, DNS, HTTPS, www redirect | ✅ Done |
@@ -27,7 +27,7 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
 | `deploy/chlorosat.nginx.conf` = real config | ✅ Done (live on the VPS 2026-09-24) |
 | `deploy/deploy.sh` | ✅ Done (CS-013); `deploy.yml` runs it too |
 | GitHub `production` environment + secrets | ✅ Done (`main` only; `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`) |
-| `deploy.yml` | ✅ Written (CS-024, #6). ⏳ First run happens when #6 merges |
+| `deploy.yml` | ✅ Written (CS-024, #7). ⏳ First run happens when #7 merges |
 | nginx cache headers + gzip check | ✅ Cache headers live (visible after the first real deploy); gzip not needed (Cloudflare compresses) |
 
 ## One-time server setup (Adam, Sprint 2, CS-013)
