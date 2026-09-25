@@ -5,6 +5,7 @@ Work starts **Sep 22** (Sprint 1 ran over), so ~8 hrs each, including Sprint 1 c
 **Sprint goal:** *Bare-bones end-to-end version (week 6 milestone, see [PRINCIPLES](../PRINCIPLES.md#goals)).* One year of real NDVI for OKC/Norman shows on the map locally, CI runs on every PR, and the VPS serves a placeholder page over HTTPS.
 **Capacity:** ~8 hrs per member. Roles rotate for now (may become fixed later).
 **Server work is Adam's only** (his personal VPS, decision D10), so Adam and Kevin swapped lanes this sprint.
+**Pulled forward (Sep 24, for the code review):** CS-024 auto-deploy and CS-038 landing page → home page (Adam), both in #7. See [BACKLOG](../BACKLOG.md).
 
 ## Sprint 1 carry-over (finish first, by ~Sep 24)
 | ID | Owner | Task | Est. hrs | Done when |

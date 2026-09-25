@@ -1,0 +1,45 @@
+/* "Early preview" notice (top of the top-left stack on /map/). Same shape as the
+   single-source notice in MethodToggle.module.css, with a title line. */
+.notice {
+  display: flex;
+  align-items: flex-start; /* Icon + button line up with the title, not the middle of the text. */
+  gap: 10px;
+  padding: 10px 8px 10px 12px;
+  border-radius: 14px;
+  font-size: 0.8125rem; /* 13px, like the other notices. */
+  line-height: 1.4;
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 1px; /* Optical: sit on the title's first line. */
+  color: var(--brand-400); /* Brand green as an accent (info, not a warning). */
+}
+
+.text {
+  flex: 1;
+  min-width: 0; /* Lets long text wrap instead of pushing the button out. */
+}
+
+.text strong {
+  display: block;
+  font-weight: 600;
+}
+
+.text p {
+  margin: 2px 0 0;
+  color: var(--glass-muted);
+}
+
+.notice button {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.notice button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}

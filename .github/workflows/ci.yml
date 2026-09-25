@@ -2,11 +2,12 @@
 # Two independent jobs run in parallel on GitHub's servers:
 #   pipeline -> Python lint (ruff) + tests (pytest)
 #   web      -> JS lint (eslint) + static build (proves the site still builds)
-# TODO(CS-024, S3): add dependency caching + path filters (skip a job when its folder didn't change).
-#   Filter PER JOB (e.g. dorny/paths-filter + `if:`), never with a workflow-level `paths:`.
+# Dependency caching: on (CS-024). Downloaded packages are reused between runs, so CI is faster.
+# Path filters (skip a job when its folder didn't change): not added; team decision pending.
+#   If added: filter PER JOB (e.g. dorny/paths-filter + `if:`), never with a workflow-level `paths:`.
 #   `pipeline` and `web` are required checks on main: a skipped job counts as passed,
 #   but a workflow that never runs blocks every merge ("Expected — Waiting").
-# Deploy is a separate workflow (deploy.yml, CS-024). See docs/DEPLOYMENT.md.
+# Deploy is a separate workflow (deploy.yml): runs after a merge to main. See docs/DEPLOYMENT.md.
 name: CI
 
 on:
@@ -27,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6       # installs uv (it then installs Python from .python-version)
+        with:
+          enable-cache: true               # reuse downloaded Python packages between runs
+          cache-dependency-glob: pipeline/uv.lock   # new cache whenever the lock file changes
       - run: uv sync --locked              # --locked: fail if uv.lock is out of date with pyproject.toml
       - run: uv run ruff check
       - run: uv run pytest
@@ -41,6 +45,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm                       # reuse downloaded npm packages between runs
+          cache-dependency-path: web/package-lock.json
       - run: npm ci                        # exact versions from package-lock.json
       - run: npm run lint
       - run: npm run build                 # output: web/out/
