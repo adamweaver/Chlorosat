@@ -37,7 +37,9 @@ Why two methods, and who it's for: [docs/PRINCIPLES.md](docs/PRINCIPLES.md).
 
 | Home page (`/`) | Map page (`/map/`) |
 |---|---|
-| ![Home page: the Chlorosat name, an animated satellite, and an Open map button](docs/images/home.png) | ![Map page: street map of the OKC area with the year slider, opacity, legend, search, and zoom controls](docs/images/map.png) |
+| ![Home page: the Chlorosat name, an animated satellite, and an Open map button](docs/images/home.png) | ![Map page: street map of the OKC area with the early-preview notice, year slider, opacity, legend, search, and zoom controls](docs/images/map.png) |
+
+*Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.*
 
 ## Status
 
