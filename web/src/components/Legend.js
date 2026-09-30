@@ -1,48 +1,41 @@
-import styles from "@/css/Legend.module.css";
+"use client";
 
-/* [AI] Purpose: A map pin drawn in a given color, with + or - inside (so color isn't the only clue).
- *      Does:    kind "gained" -> plus sign, anything else -> minus sign. Same shape the map markers can use later.
- *      Written: 2026-09-23 · Claude Opus 5.5 · requested by Lucas
- *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · moved here from MapOverlay.js */
-export function Pin({ color, kind }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0" fill={color} stroke="#fff" strokeWidth="1.5" />
-      <path d={kind === "gained" ? "M9 10h6M12 7v6" : "M9 10h6"} stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
+import styles from "@/css/MapApp.module.css";
+import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from "@/lib/heatColors";
 
-/* [AI] Purpose: Explain what each map color and pin means, in plain words (PRINCIPLES #1).
- *      Does:    "Legend" rows (swatch + label) from method.classes, then "Change hotspots"
- *               rows (pin + label) for the gained/lost entries in method.changeClasses.
- *      Context: Colors/labels come from manifest.json, never hard-coded, so the legend always matches
- *               the PNGs. Hotspot pins aren't in the data contract yet (needs team OK).
- *               Replaces the CS-022 stub (agreed with Kevin).
- *      Written: 2026-09-23 · Claude Opus 5.5 · requested by Lucas
- *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · moved here from MapOverlay.js; CSS module */
-export default function Legend({ method }) {
-  const hotspots = method.changeClasses.filter((c) => c.key !== "stable");
+/* [AI] Purpose: Legend now matches the standalone chlorosat-globe's real
+ *      continuous NDVI heat gradient, since this app renders the same
+ *      globe engine (chlorosatGlobeEngine.js) rather than the old Leaflet
+ *      2D map with discrete land-cover classes from methods.py. Pulls the
+ *      gradient stops from the SAME heatColors.js constants the engine
+ *      actually recolors tiles with, so this can't drift out of sync with
+ *      what's really rendered.
+ *      Update: made the panel a bit larger and reworded the labels to read
+ *      more like a professional map legend - "None/Some/Dense" and "hidden"
+ *      were a little casual for what's otherwise a data-viz-style overlay.
+ *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
+ *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/Legend.jsx */
+const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+// Stops mirror HEAT_LUT's breakpoints in chlorosatGlobeEngine.js: red->yellow
+// (0-35%), yellow->green (35-55%), green->dark green (55-100%).
+const GRADIENT = `linear-gradient(to right, ${rgb(HEAT_RED)} 0%, ${rgb(HEAT_YELLOW)} 35%, ${rgb(HEAT_GREEN)} 55%, ${rgb(HEAT_DARK_GREEN)} 100%)`;
+
+export default function Legend() {
   return (
-    <section className={`glass ${styles.legend}`} aria-label="Legend">
-      <h2>Legend</h2>
-      <ul>
-        {method.classes.map((c) => (
-          <li key={c.key}>
-            <span className={styles.swatch} style={{ background: c.color }} />
-            {c.label}
-          </li>
-        ))}
-      </ul>
-      <h2>Change hotspots</h2>
-      <ul>
-        {hotspots.map((c) => (
-          <li key={c.key}>
-            <Pin color={c.color} kind={c.key} />
-            {c.label}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className={styles.legendPanel}>
+      <div className={styles.legendTitle}>VEGETATION (NDVI)</div>
+      <div className={styles.legendBar} style={{ background: GRADIENT }} />
+      <div className={styles.legendLabels}>
+        <span>Low</span>
+        {/* Hidden on phones, where the legend is compact. */}
+        <span className={styles.legendModerate}>Moderate</span>
+        <span>High</span>
+      </div>
+      <div className={styles.legendDivider} />
+      <div className={styles.legendRow}>
+        <span className={styles.legendSwatch} />
+        Water / No Data
+      </div>
+    </div>
   );
 }

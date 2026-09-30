@@ -4,4 +4,35 @@
   display: flex;
   flex-direction: column; /* The map grows downward, under the header. */
   position: relative; /* The overlay positions itself inside this box. */
+  /* [AI] The globe's controls were designed on a dark page with light text and
+     normal line height (chlorosat-map-demo); set those here so the site's
+     light-page defaults (dark text, line-height 1.5) don't change them.
+     Added 2026-09-30 · Claude Opus 5.5 (for David) */
+  color: #f2f3f5;
+  line-height: normal;
+}
+
+.mapPage button {
+  font-family: inherit;
+}
+
+/* [AI] The globe on other pages (PersistentMap.js): same size and spot as on
+   /map/, but invisible and not clickable, so coming back is instant.
+   Written: 2026-09-30 · Claude Opus 5.5 · requested by David */
+.mapPageHidden {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--header-h) + 1px); /* 1px: the header's bottom border */
+  height: calc(100dvh - var(--header-h) - 1px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mapLoading {
+  margin: 0;
+  padding: 1rem;
+  color: #f2f3f5;
+  background: #0d0f12;
+  flex: 1;
 }

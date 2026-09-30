@@ -1,0 +1,81 @@
+/* ---------- About page (/about/) ----------
+   [AI] Dark explainer page from the chlorosat-map-demo (David). The page
+   scrolls inside .aboutPage (below the header) with the shared
+   .dark-scrollbar from globals.css, so the header stays put.
+   Ported: 2026-09-30 · Claude Opus 5.5 (for David) */
+.aboutPage {
+  /* A fixed height (not flex: 1): the body only has a min-height, so a
+     flexible box would just grow with the text and the whole window would
+     scroll instead of this box. */
+  flex: none;
+  height: calc(100dvh - var(--header-h) - 1px); /* 1px: the header's bottom border */
+  overflow-y: auto;
+  display: flex;
+  background: #0d0f12;
+}
+
+/* ---------- About panel ---------- */
+.aboutWrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  background: #0d0f12;
+  padding: 40px;
+}
+
+.aboutCard {
+  max-width: 600px;
+  /* Auto margins center the card vertically when it fits, and let the page
+     scroll from the top (instead of cutting off the start) when it doesn't. */
+  margin: auto 0;
+  color: #d7d9dc;
+  line-height: 1.6;
+}
+
+/* Sections added with the fuller About text (2026-09-29, David). */
+.aboutCard h2 {
+  margin: 24px 0 8px;
+  font-size: 17px;
+  color: #f2f3f5;
+}
+
+.aboutCard ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.aboutCard li {
+  margin-bottom: 8px;
+}
+
+.aboutCard strong {
+  color: #f2f3f5;
+}
+
+.aboutNote {
+  margin-top: 24px !important;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  color: #9aa0a8;
+}
+
+.aboutCard h1 {
+  color: #f2f3f5;
+  margin-bottom: 8px;
+}
+
+.aboutCard p {
+  margin: 0 0 14px;
+}
+
+/* Phones: less padding, smaller title. */
+@media (max-width: 640px), (max-height: 500px) {
+  .aboutWrap {
+    padding: 24px 20px;
+  }
+
+  .aboutCard h1 {
+    font-size: 26px;
+  }
+}
