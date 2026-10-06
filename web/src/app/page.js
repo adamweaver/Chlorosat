@@ -14,7 +14,9 @@ const outfit = localFont({ src: "../fonts/outfit.woff2", weight: "100 900", disp
  *      Context: CS-038. Ported from the old web/landing/index.html (the placeholder that was live
  *               on chlorosat.com); "Work in progress" became the button. No "use client":
  *               the page is plain HTML + CSS, with no JavaScript of its own.
- *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver */
+ *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver
+ *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · night-sky background like the globe's; Stars is
+ *               now a small client component (canvas), the rest of the page is still plain HTML + CSS */
 export default function Home() {
   return (
     <main className={`${styles.home} ${outfit.className}`}>

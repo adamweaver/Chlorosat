@@ -9,7 +9,7 @@
   display: grid;
   place-items: center; /* Centers the stack both ways. */
   padding: 2rem 1rem;
-  background: #2a2a2a; /* Dark gray from the original landing page. */
+  background: #000; /* Night sky, same black as the globe's on /map/ (David, 2026-09-30). */
   color: var(--brand-200);
 }
 
@@ -19,13 +19,19 @@
   inset: 0; /* Cover the whole home area, behind the stack. */
 }
 
+/* The still star field, drawn by Stars.js like the globe's sky. */
+.skyCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .stars span {
-  position: absolute; /* left/top come from Stars.js. */
-  width: 2px;
-  height: 2px;
+  position: absolute; /* left/top/size come from Stars.js. */
   border-radius: 50%;
-  background: var(--brand-200);
-  opacity: 0.15;
+  background: #fff;
+  opacity: 0.2;
   animation: twinkle 4s ease-in-out infinite; /* Delay + duration vary per star (Stars.js). */
 }
 
@@ -131,10 +137,10 @@
 @keyframes twinkle {
   0%,
   100% {
-    opacity: 0.1;
+    opacity: 0.15;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.95;
   }
 }
 
@@ -145,5 +151,22 @@
   .leaf,
   .arc {
     animation: none;
+  }
+}
+
+/* Phone turned sideways (short screen): shrink the name and satellite so the
+   Open map button still fits. (David, 2026-09-30) */
+@media (max-height: 500px) {
+  .home {
+    padding: 1rem;
+  }
+
+  .name {
+    font-size: min(15vw, 15vh, 84px);
+  }
+
+  .satellite {
+    width: min(60vw, 32vh, 300px);
+    margin: 3vh auto 4vh;
   }
 }

@@ -1,0 +1,1146 @@
+
+
+/* ---------- Shared floating panel ---------- */
+.panel {
+  position: absolute;
+  z-index: 1000;
+  background: rgba(24, 26, 31, 0.92);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #f2f3f5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Year slider ---------- */
+/* [AI] Purpose: was a permanently-open panel; now collapses to a small
+ *      header row showing just the current year, and pops the slider open
+ *      on hover (same idea as .basemapStack, but this one expands
+ *      downward from a top-anchored box, so no invisible hover-hitbox
+ *      padding is needed - the box is just taller while expanded).
+ *      Collapsed width is now also much narrower (just enough for "Year
+ *      2025" + the chevron) rather than staying at the full 320px slider
+ *      width at all times - it widens back out to 320px on hover, same
+ *      moment the slider itself fades/grows in below it.
+ *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David */
+.yearPanel {
+  composes: panel;
+  top: 16px;
+  left: 16px;
+  width: 128px;
+  padding: 12px 14px;
+  transition: width 0.2s ease;
+}
+
+.yearPanelExpanded {
+  width: 320px;
+}
+
+.yearPanelHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f2f3f5;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Pinned at a fixed offset from the left (rather than following "Year" in
+   normal flow) so its own left edge lines up with .opacityValue's left
+   edge below, whatever the two leading elements' widths ("Year" text vs.
+   the eye icon) happen to be. Taken out of flow, so .yearPanelChevron's
+   own margin-left:auto is what pushes the chevron to the right edge. */
+.yearPanelHeaderValue {
+  position: absolute;
+  left: 40px;
+  text-align: left;
+}
+
+.yearPanelChevron {
+  color: #9aa0a8;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: transform 0.18s ease;
+}
+
+.yearPanelExpanded .yearPanelChevron {
+  transform: rotate(180deg);
+}
+
+.yearPanelBody {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+  transition: max-height 0.2s ease, opacity 0.15s ease, margin-top 0.2s ease;
+}
+
+.yearPanelExpanded .yearPanelBody {
+  max-height: 80px;
+  opacity: 1;
+  margin-top: 10px;
+}
+
+.yearSlider {
+  width: 100%;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  margin: 4px 0 8px;
+}
+
+.yearSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2e9e63;
+  cursor: pointer;
+}
+
+.yearSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2e9e63;
+  cursor: pointer;
+}
+
+.yearLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9aa0a8;
+}
+
+.yearLabelActive {
+  color: #2e9e63;
+  font-weight: 600;
+}
+
+.yearLabelDisabled {
+  color: #565a61;
+}
+
+/* ---------- Opacity control ---------- */
+/* [AI] Purpose: was a permanently-320px-wide row that only opened the
+ *      slider on click; now collapses to a small pill (eye icon + % +
+ *      chevron) and pops open on hover, mirroring .yearPanel above.
+ *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David */
+.opacityPanel {
+  composes: panel;
+  /* yearPanel sits at top:16 and is ~44px tall collapsed (16+44=60), so 72
+     leaves the same 12px gap between the two as .sideStack's own gap
+     between its recenter/locate/zoom buttons. */
+  top: 72px;
+  left: 16px;
+  width: 128px;
+  padding: 12px 14px;
+  /* Animates alongside .yearPanel's own height change (top), and its own
+     hover-driven width change, so both slide smoothly. */
+  transition: top 0.2s ease, width 0.2s ease;
+}
+
+.opacityPanelExpanded {
+  width: 320px;
+}
+
+/* Applied while the year panel above is hovered/expanded - it grows from
+   ~44px tall to ~90px, which would otherwise overlap this panel's default
+   top:72px position. Keeps the same +46px offset used for the base
+   top:72px above, just landing at 118 instead of the old 136. */
+.opacityPanelPushed {
+  top: 118px;
+}
+
+.opacityRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+
+.opacityIcon {
+  color: #9aa0a8;
+  flex-shrink: 0;
+}
+
+.eyeToggle {
+  color: #9aa0a8;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+}
+
+.eyeToggleOff {
+  color: #565a61;
+}
+
+.opacityLabel {
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 0;
+  transition: max-width 0.2s ease;
+}
+
+.opacityPanelExpanded .opacityLabel {
+  max-width: 200px;
+}
+
+/* Collapsed: pinned at the same fixed left offset as .yearPanelHeaderValue
+   so the two panels' percentage/year text line up left-edge-to-left-edge
+   even though their leading elements ("Year" text vs. the eye icon) are
+   different widths. Expanded: switches back into normal flow (see the
+   .opacityPanelExpanded override below) since the label text revealed to
+   its left grows well past that fixed offset and would otherwise run
+   underneath it. */
+.opacityValue {
+  position: absolute;
+  left: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f2f3f5;
+  text-align: left;
+}
+
+.opacityPanelExpanded .opacityValue {
+  position: static;
+  min-width: 34px;
+  text-align: right;
+  margin-left: auto;
+}
+
+.chevron {
+  color: #9aa0a8;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.opacityPanelExpanded .chevron {
+  margin-left: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.opacitySliderWrap {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 2px;
+  margin-top: 0;
+  transition: max-height 0.2s ease, opacity 0.15s ease, margin-top 0.2s ease;
+}
+
+.opacityPanelExpanded .opacitySliderWrap {
+  max-height: 48px;
+  opacity: 1;
+  margin-top: 10px;
+}
+
+.opacitySlider {
+  display: block;
+  width: 100%;
+  appearance: none;
+  height: 4px;
+  margin: 9px 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+}
+
+.opacitySlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2e9e63;
+  cursor: pointer;
+}
+
+.opacitySlider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2e9e63;
+  cursor: pointer;
+}
+
+/* ---------- Search bar ---------- */
+.searchPanel {
+  composes: panel;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  padding: 0;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  transition: background 0.15s ease;
+}
+
+/* Same lighter-grey hover fill as .iconButton (the recenter/locate
+   buttons), for consistency across the floating chrome. */
+.searchPanel:hover {
+  background: rgba(40, 43, 50, 0.95);
+}
+
+.searchIcon {
+  color: #9aa0a8;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f2f3f5;
+  font-size: 14px;
+}
+
+.searchInput::placeholder {
+  color: #7d828a;
+}
+
+.searchClearButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa0a8;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.searchClearButton:hover {
+  color: #f2f3f5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Search-as-you-type suggestions dropdown ---------- */
+/* .searchPanel is itself position:absolute (via composes: panel), which
+   is what makes it the containing block for this - no separate positioned
+   wrapper needed. */
+.searchSuggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: rgba(24, 26, 31, 0.97);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-height: 260px;
+  overflow-y: auto;
+  /* [AI] Dark gray scrollbar on the list's own background (no separate
+   *      track), for when the list is taller than 260px - e.g. up to 10
+   *      recent searches. The ::-webkit-scrollbar rules style it in
+   *      Chrome, Edge and Safari (and drop Windows' little arrow buttons);
+   *      Firefox only understands scrollbar-color, set in the @supports
+   *      block below. Setting scrollbar-color for Chrome too would make it
+   *      ignore the rules below and bring the arrow buttons back.
+   *      Written: 2026-09-29 · Claude Opus 5.5 · requested by David */
+}
+
+@supports (-moz-appearance: none) {
+  .searchSuggestions {
+    scrollbar-width: thin;
+    scrollbar-color: #4a4e56 transparent;
+  }
+}
+
+.searchSuggestions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.searchSuggestions::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0; /* keeps the thumb clear of the rounded corners */
+}
+
+.searchSuggestions::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Recent searches: start the scrollbar level with the first place, below the
+   pinned "Recent searches" header (36px from the list's top edge), so it
+   doesn't run up beside the header (David, 2026-09-29). */
+.searchSuggestionsRecents::-webkit-scrollbar-track {
+  margin-top: 36px;
+}
+
+.searchSuggestions::-webkit-scrollbar-thumb {
+  background: #4a4e56;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.searchSuggestions::-webkit-scrollbar-thumb:hover {
+  background-color: #5c616a;
+}
+
+.searchSuggestionItem {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #d7d9dc;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.searchSuggestionItemActive {
+  background: rgba(46, 158, 99, 0.18);
+  color: #f2f3f5;
+}
+
+/* Recent searches (shown when the search box is empty - see SearchBar.jsx) */
+.searchRecentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a9098;
+  cursor: default;
+  /* Stays pinned at the top while the list scrolls, so "Clear" is always
+     reachable. -6px covers the list's own top padding; the solid color
+     matches the list background so rows slide under it cleanly. */
+  position: sticky;
+  top: -6px;
+  z-index: 1;
+  margin-top: -6px;
+  padding-top: 10px;
+  background: rgb(24, 26, 31);
+}
+
+.searchRecentClearAll {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  margin-right: -6px;
+  border-radius: 6px;
+  font: inherit;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 500;
+  font-size: 12px;
+  color: #8a9098;
+  cursor: pointer;
+}
+
+.searchRecentClearAll:hover {
+  color: #f2f3f5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.searchRecentItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.searchRecentIcon {
+  flex-shrink: 0;
+  color: #8a9098;
+}
+
+.searchRecentLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.searchRecentRemove {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #8a9098;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.searchRecentItem:hover .searchRecentRemove,
+.searchSuggestionItemActive .searchRecentRemove,
+.searchRecentRemove:focus-visible {
+  opacity: 1;
+}
+
+.searchRecentRemove:hover {
+  color: #f2f3f5;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Touch screens have no hover, so the remove buttons stay visible there. */
+@media (hover: none) {
+  .searchRecentRemove {
+    opacity: 1;
+  }
+}
+
+/* ---------- Side control stack (filter / locate / zoom) ---------- */
+.sideStack {
+  position: absolute;
+  z-index: 1000;
+  /* David asked for this stack (recenter/locate/zoom) to sit right above
+     the basemap toggle instead of under the search bar. The toggle's
+     anchor pill is bottom:34px + 44px tall, so 90px clears its top edge
+     with a small gap above it. */
+  bottom: 90px;
+  /* Same 16px right inset as the search bar/basemap toggle, so all three
+     right edges land on the exact same x - the previous 24px here was
+     compensating for the .iconButton/.zoomGroup position:absolute leak
+     fixed above; with that fixed, .sideStack has real in-flow content to
+     size against again and 16px lines it up properly. */
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: bottom 0.2s ease;
+}
+
+/* Applied while the basemap toggle right below is hovered/expanded - its
+   floating option pill pops up to bottom:86px (34 + 52) and is 44px tall,
+   so this needs to clear 130px; 140px leaves a small gap above it. */
+.sideStackPushed {
+  bottom: 140px;
+}
+
+.iconButton {
+  composes: panel;
+  /* .panel sets position:absolute, which - inherited here via composes -
+     was pulling this out of .sideStack's flex layout entirely (an
+     absolutely-positioned box isn't a flex item). That left .sideStack
+     with no real in-flow content to size itself against, which is what
+     was actually behind the zoom stack's right-edge misalignment, not
+     the offset value itself. Overriding back to relative puts it back
+     into the flex column normally. */
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #f2f3f5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.iconButton:hover {
+  background: rgba(40, 43, 50, 0.95);
+}
+
+.zoomGroup {
+  composes: panel;
+  /* Same fix as .iconButton above - .panel's inherited position:absolute
+     was taking this out of .sideStack's flex flow. */
+  position: relative;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.zoomButton {
+  width: 40px;
+  height: 36px;
+  background: none;
+  border: none;
+  color: #f2f3f5;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoomButton:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.zoomDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Legend ---------- */
+/* [AI] Purpose: matches the standalone chlorosat-globe's legend now that
+ *      this app renders the same real globe engine - a continuous NDVI
+ *      heat gradient, not the old discrete land-cover swatch list (that
+ *      list was for the Leaflet 2D demo's different, discrete-class idea
+ *      of a legend; the globe classifies vegetation as one continuous
+ *      score, so a gradient bar is the accurate representation of what it
+ *      actually renders).
+ *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David */
+.legendPanel {
+  composes: panel;
+  left: 16px;
+  bottom: 16px;
+  width: 260px;
+  padding: 16px 18px;
+}
+
+.legendTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #9aa0a8;
+  margin-bottom: 9px;
+}
+
+.legendBar {
+  height: 13px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+}
+
+.legendLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9aa0a8;
+  margin-bottom: 11px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #d7d9dc;
+}
+
+.legendDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 11px 0;
+}
+
+.legendSwatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: repeating-conic-gradient(rgba(255,255,255,0.15) 0% 25%, transparent 0% 50%) 0 0 / 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- Loading badge ---------- */
+/* Sits under the search bar in its own fixed spot - no longer paired with
+   .sideStack's position now that David moved that stack down to sit above
+   the basemap toggle instead. */
+.loadingBadge {
+  composes: panel;
+  top: 66px;
+  right: 64px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.3s ease;
+  color: #d7d9dc;
+}
+
+.spinner {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #2e9e63;
+  animation: csatSpin 0.8s linear infinite;
+}
+
+@keyframes csatSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Basemap toggle ---------- */
+/* [AI] Purpose: was two always-visible stacked pills - easy to miss and
+ *      took up permanent screen space. Now it's a single pill showing
+ *      just the active basemap, made more prominent (bigger, brighter
+ *      border, a chevron hinting there's more) - hovering it pops the
+ *      other choice(s) up above as floating pills that fade/slide in,
+ *      and it collapses back down to the single active pill once the
+ *      mouse leaves. The floating pills are position:absolute (anchored
+ *      off .basemapStack, which is already position:absolute) so they
+ *      overlay rather than push layout around, and the whole thing is a
+ *      pure CSS transition off one "expanded" class - no JS animation.
+ *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David */
+.basemapStack {
+  position: absolute;
+  z-index: 1000;
+  right: 16px;
+  /* Was 16px, flush against the true bottom edge - which is also exactly
+     where the small attribution credit line (globals.css) now lives, so
+     this pill's own higher z-index was clipping the top sliver of that
+     text. Bumped up to leave it clear room underneath. */
+  bottom: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  /* Used to carry a big padding-top here to bridge the gap between the
+     anchor and the floating pill(s) above it (so hovering across that gap
+     didn't collapse the popup before the cursor reached them), but that
+     invisible box then overlapped - and swallowed clicks meant for - the
+     recenter/locate/zoom stack David moved to sit right above this
+     toggle. pointer-events:none removes this container from hit-testing
+     entirely (the actual pills opt back in via .basemapOption below, and
+     still get mouseenter/mouseleave since those bubble up regardless of
+     an ancestor's own pointer-events); the gap itself is now bridged by
+     the much smaller, precisely-placed .basemapHoverBridge instead, which
+     only covers the narrow strip between the pills - not the space above
+     them where the button stack now lives. */
+  pointer-events: none;
+}
+
+/* Bridges the small visual gap between the anchor pill and the floating
+   pill directly above it (only needed while there's exactly one inactive
+   basemap option to float, which is all this toggle currently has) so the
+   cursor can cross from one to the other without the gap being read as
+   "left the toggle" and collapsing it. Sized to just that gap, not the
+   larger dead space .basemapStack used to pad out - it stays clear of the
+   button stack now sitting above the whole toggle. */
+.basemapHoverBridge {
+  position: absolute;
+  right: 0;
+  bottom: 44px;
+  width: 134px;
+  height: 8px;
+  pointer-events: auto;
+}
+
+.basemapOption {
+  composes: panel;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  /* Fixed width/height (rather than sizing to each label's text) so the
+     anchor pill and the floating pill(s) all render as identical boxes -
+     "Satellite" and "Map" would otherwise produce visibly different
+     pill widths, and the anchor's chevron icon would widen it further. */
+  /* 134px = just wide enough for "Satellite" + thumbnail + arrow
+     (was 156px, which left empty space; David, 2026-09-29). */
+  width: 134px;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 14px 0 10px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.basemapOptionAnchor {
+  position: relative;
+  z-index: 2;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.basemapOptionAnchor:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.basemapThumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.basemapOptionActive {
+  background: #2e9e63;
+  color: #0d0f12;
+  border-color: #2e9e63;
+}
+
+.basemapChevron {
+  /* auto pushes the arrow to the pill's right edge, so it sits in the same
+     spot for "Satellite" and "Map" instead of right after the word
+     (David, 2026-09-29). */
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.basemapStackExpanded .basemapChevron {
+  transform: rotate(180deg);
+}
+
+.basemapOptionFloating {
+  composes: basemapOption;
+  position: absolute;
+  right: 0;
+  background: rgba(24, 26, 31, 0.95);
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.basemapStackExpanded .basemapOptionFloating {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.basemapOptionFloating:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- Phones ---------- */
+/* [AI] Purpose: David asked for the app to look good on mobile. At phone
+ *      width the desktop layout collided: the 320px search bar sat on top of
+ *      the Year panel, the legend ran into the basemap button, and both
+ *      covered the credit line. Below 640px:
+ *      - the search bar spans the top edge, with Year/opacity stacked under it
+ *      - pop-open panels never grow wider than the screen
+ *      - legend and basemap button shrink so they fit side by side, and sit
+ *        above the (now wrapping) credit line, with the button stack above
+ *        the basemap button as on desktop
+ *      - the search input is 16px so iOS doesn't zoom the page on focus
+ *      Positions are relative to the map area (below the 52px navbar).
+ *      Written: 2026-09-25 · Claude Opus 5.5 · requested by David */
+@media (max-width: 640px), (max-height: 500px) {
+
+  .searchPanel {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    padding: 9px 14px;
+  }
+
+  .searchInput {
+    font-size: 16px;
+  }
+
+  /* About the same number of rows as desktop's 260px list (phone rows are a
+     little taller); 50vh keeps it on screen with the phone turned sideways.
+     (David, 2026-09-29: the phone list showed far more than desktop.) */
+  .searchSuggestions {
+    max-height: min(280px, 50vh);
+  }
+
+  .searchSuggestionItem {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Search bar is ~42px tall at top:12, so the Year panel starts just under it. */
+  .yearPanel {
+    top: 64px;
+    left: 12px;
+    max-width: calc(100vw - 24px);
+  }
+
+  /* Year panel is ~44px collapsed (64 + 44 = 108), leaving the same 12px gap
+     as on desktop; pushed down by the same +46px while Year is open. */
+  .opacityPanel {
+    top: 120px;
+    left: 12px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .opacityPanelPushed {
+    top: 166px;
+  }
+
+  /* [AI] Phone legend made compact (David found it too big, 2026-09-29):
+   *      narrower, thinner bar, just Low/High, no divider. The credit line
+   *      below is now a single ~16px line (globals.css), so the bottom
+   *      controls sit at 24px; while the full credits are open
+   *      (.credits-open, toggled by the engine) they move up to 40px. */
+  .legendPanel {
+    left: 12px;
+    bottom: 24px;
+    width: 138px;
+    padding: 8px 10px 9px;
+    transition: bottom 0.15s ease;
+  }
+
+  .legendTitle {
+    font-size: 9.5px;
+    margin-bottom: 5px;
+  }
+
+  .legendBar {
+    height: 7px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+  }
+
+  .legendLabels {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .legendModerate {
+    display: none;
+  }
+
+  .legendDivider {
+    display: none;
+  }
+
+  .legendRow {
+    font-size: 10.5px;
+    gap: 6px;
+  }
+
+  .legendSwatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  .basemapStack {
+    right: 12px;
+    bottom: 24px;
+    transition: bottom 0.15s ease;
+  }
+
+  :global(.credits-open) .legendPanel,
+  :global(.credits-open) .basemapStack {
+    bottom: 40px;
+  }
+
+  .basemapOption {
+    width: 134px;
+    height: 40px;
+    border-radius: 20px;
+  }
+
+  /* Anchor is 40px tall here and the floating pill still sits 52px up
+     (BaseMapToggle.jsx), so the gap to bridge is 12px starting at 40. */
+  .basemapHoverBridge {
+    bottom: 40px;
+    height: 12px;
+    width: 134px;
+  }
+
+  /* Basemap anchor: bottom 24 + 40 tall = 64, plus a 12px gap. */
+  .sideStack {
+    right: 12px;
+    bottom: 76px;
+  }
+
+  /* Floating basemap pill: 24 + 52 = 76 to 116, plus a 12px gap. */
+  .sideStackPushed {
+    bottom: 128px;
+  }
+
+  /* Same +16px as the legend/basemap button while the full credits are open. */
+  :global(.credits-open) .sideStack {
+    bottom: 92px;
+  }
+
+  :global(.credits-open) .sideStackPushed {
+    bottom: 144px;
+  }
+}
+
+/* On a touch phone, pinch-to-zoom replaces the +/- buttons (the way Google
+   Maps' phone app does it), freeing that space. A narrow desktop window with
+   a mouse keeps them. */
+@media (max-width: 640px) and (pointer: coarse), (max-height: 500px) and (pointer: coarse) {
+  .zoomGroup {
+    display: none;
+  }
+}
+
+/* Touch screens have no hover, but browsers keep a :hover style "stuck" on
+   whatever was last tapped - so the lighter hover fill would linger on the
+   search bar and buttons after a tap. Keep them at their resting colors. */
+@media (hover: none) {
+  .searchPanel:hover,
+  .iconButton:hover {
+    background: rgba(24, 26, 31, 0.92);
+  }
+
+  .zoomButton:hover {
+    background: none;
+  }
+}
+
+/* ---------- Map notice (e.g. location errors) ---------- */
+/* [AI] Short-lived message shown centered near the bottom of the map, above
+ *      the legend/basemap row, e.g. when "Find my location" can't get a
+ *      location. Tap to dismiss; SideControls also clears it after 7s.
+ *      Written: 2026-09-25 · Claude Opus 5.5 · requested by David */
+.mapNotice {
+  composes: panel;
+  left: 50%;
+  bottom: 170px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #f2f3f5;
+  text-align: center;
+  cursor: pointer;
+}
+
+@media (max-width: 640px), (max-height: 500px) {
+  .mapNotice {
+    bottom: 196px;
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* ---------- Phone menu (Year + opacity) ---------- */
+/* [AI] David asked for Year and opacity to move into a menu on phones, opened
+ *      by a three-bar button inside the search bar (like Google Maps on a
+ *      phone). Desktop is unchanged: the button and menu are hidden there, and
+ *      on phones the two floating panels are hidden instead (see the phone
+ *      section below).
+ *      Written: 2026-09-29 · Claude Opus 5.5 · requested by David */
+.searchMenuButton {
+  display: none; /* phones only */
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: -4px 0 -4px -6px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: #d7d9dc;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.searchMenuButton[aria-expanded='true'] {
+  color: #56c27f;
+}
+
+.mapMenu {
+  composes: panel;
+  z-index: 1001; /* above the legend if the two meet on a short screen */
+  display: none; /* phones only */
+  top: 64px;
+  left: 12px;
+  right: 12px;
+  padding: 14px 16px;
+}
+
+.mapMenuDivider {
+  height: 1px;
+  margin: 14px 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* One control inside the menu: full width, no panel box of its own. Comes
+   after .yearPanelExpanded / .opacityPanelExpanded so its width wins. */
+.menuSection {
+  width: auto;
+}
+
+/* Nothing to open or close in the menu, so no arrows. */
+.menuSection .yearPanelChevron,
+.menuSection .chevron {
+  display: none;
+}
+
+@media (max-width: 640px), (max-height: 500px) {
+  .searchMenuButton {
+    display: flex;
+  }
+
+  /* The menu button takes the magnifier's place, as in Google Maps. */
+  .searchIcon {
+    display: none;
+  }
+
+  .mapMenu {
+    display: block;
+  }
+
+  .yearPanel,
+  .opacityPanel {
+    display: none;
+  }
+}
+
+/* ---------- Phone turned sideways ---------- */
+/* [AI] David found a sideways phone cluttered: at ~800x375 it's wider than
+ *      640px, so it got the desktop layout squeezed into ~320px of height.
+ *      Every phone rule above now also applies to short screens (max-height
+ *      500px - a sideways phone, never a laptop or tablet). Here, on a wide
+ *      short screen, the search bar and its menu keep a normal width on the
+ *      left (like Google Maps sideways) instead of stretching edge to edge,
+ *      which leaves the right side free for the map buttons.
+ *      Written: 2026-09-29 · Claude Opus 5.5 · requested by David */
+@media (max-height: 500px) and (min-width: 641px) {
+  .searchPanel,
+  .mapMenu {
+    right: auto;
+    width: 360px;
+  }
+
+  /* Tighter menu so it fits the short screen. */
+  .mapMenu {
+    padding: 10px 14px;
+  }
+
+  .mapMenuDivider {
+    margin: 8px 0;
+  }
+}
