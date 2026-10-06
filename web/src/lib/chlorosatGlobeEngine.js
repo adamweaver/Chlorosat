@@ -21,8 +21,12 @@ import * as maplibregl from 'maplibre-gl';
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
 import { REF_SOURCE_ID, REF_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
 
+// [AI] The .js copy, not the .mjs original: some servers (including ours at
+//      first deploy) send .mjs as a download type, and browsers then refuse to
+//      start the worker - place names, borders and the Map view go missing.
+//      See scripts/prepare-maplibre-worker.mjs. Edited: 2026-10-05 · Claude Opus 5.5 · requested by David
 if (typeof maplibregl.setWorkerUrl === 'function') {
-  maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+  maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.js');
 }
 
 const NATIVE_MAX_ZOOM = 9;
@@ -1613,6 +1617,9 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     // right-click-drag rotate/tilt gesture. Left-click-drag panning and
     // scroll-to-zoom are untouched.
     dragRotate: false,
+    // Resizing is handled below (smoothResize), not by MapLibre's own
+    // watcher, which only caught up with the window a few times a second.
+    trackResize: false,
     // David wants the globe to load at roughly this size and not let
     // zooming out shrink it much past that - minZoom sits just a touch
     // below the initial zoom so there's a little room to back out, not
@@ -1794,6 +1801,20 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     creditTimer = setTimeout(updateImageryCredit, 350);
   }
   map.on('moveend', scheduleCreditUpdate);
+
+  // [AI] Smooth resizing. David found the globe stuttering while dragging the
+  //      window's edge. Measured: the page redrew ~140 times a second, but
+  //      MapLibre's built-in watcher only resized the globe ~16 times a
+  //      second, so it sat at the old size in between and jumped. Resizing
+  //      (and redrawing, so there's no blank frame) right when the browser
+  //      reports the new size kept up easily in testing (frames stayed ~7 ms).
+  //      ResizeObserver reports at most once per frame, so this can't pile up.
+  //      Written: 2026-09-30 · Claude Opus 5.5 · requested by David
+  const resizeObserver = new ResizeObserver(() => {
+    map.resize();
+    if (typeof map.redraw === 'function') map.redraw();
+  });
+  resizeObserver.observe(container);
   map.on('load', scheduleCreditUpdate);
 
   map.on('movestart', () => { prefetchGeneration++; lastMoveSample = null; });
@@ -1911,7 +1932,15 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       // filling the screen (David noticed it with the University of
       // Oklahoma). 16 sits one step under the map's own maxZoom, so tiny
       // places still keep a little surrounding context.
-      map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 1200 });
+      // [AI] On a phone (portrait) a flat 60px margin used a third of the
+      //      width, so results only filled ~2/3 of the screen. There, keep
+      //      clear of the search bar (top) and the legend / Satellite button
+      //      (bottom) but use nearly the full width. Found by searching 100
+      //      places and measuring each result (David, 2026-09-30).
+      const box = map.getContainer();
+      const phone = box.clientWidth <= 640;
+      const padding = phone ? { top: 70, bottom: 100, left: 16, right: 16 } : 60;
+      map.fitBounds(bounds, { padding, maxZoom: 16, duration: 1200 });
     },
 
     // [AI] onError(message) gets a plain-English reason when location can't
@@ -1995,6 +2024,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     },
 
     destroy() {
+      resizeObserver.disconnect();
       map.remove();
     }
   };
