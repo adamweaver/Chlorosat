@@ -311,3 +311,14 @@ button.glass {
     scrollbar-color: #4a4e56 transparent;
   }
 }
+
+/* ---------- Night sky (home page + behind the globe) ----------
+   [AI] A fixed star image tiled on black, made once by
+   scripts/make-stars.mjs. It used to be drawn at random in the browser on
+   every load and resize, so the sky kept changing (on phones, opening the
+   keyboard re-scattered it). The browser downloads it once and caches it.
+   Written: 2026-09-30 · Claude Opus 5.5 · requested by David */
+.night-sky {
+  background: #000 url("/stars.svg") repeat;
+  background-size: 1024px 1024px;
+}

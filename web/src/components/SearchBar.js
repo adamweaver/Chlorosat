@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from "@/css/MapApp.module.css";
-import { searchPlaces } from "@/lib/geocode";
+import { searchPlaces, minSearchLength } from "@/lib/geocode";
 
 /* [AI] Recent searches. David wanted the search box to show a visitor's
  *      most recent searches as soon as it's clicked, before anything is
@@ -80,6 +80,21 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
   // doesn't change anything, the effect never runs, and a plain flag would
   // stay set and swallow the *next* real search instead.
   const suppressNextSearchRef = useRef(null);
+  // Latest engine, for reading the map view inside the delayed search below
+  // (kept in a ref so the search effect doesn't re-run when the engine arrives).
+  const engineRef = useRef(engine);
+  useEffect(() => {
+    engineRef.current = engine;
+  });
+  // The place last picked, so Enter on its (unchanged) name flies back to it.
+  const lastPlaceRef = useRef(null);
+
+  // The map view, so places near what's on screen can rank higher (lib/geocode.js).
+  function currentNear() {
+    const map = engineRef.current && engineRef.current.map;
+    const center = map && map.getCenter();
+    return center ? { lng: center.lng, lat: center.lat, zoom: map.getZoom() } : null;
+  }
 
   // Debounced as-you-type lookup - waits for a short pause in typing so it
   // doesn't fire a request per keystroke, and only searches once there's
@@ -95,13 +110,13 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
     // Too short to search: nothing to do here. Old results are hidden by
     // `shownSuggestions` below instead of being cleared, because calling
     // setState directly in an effect is rejected by react-hooks/set-state-in-effect.
-    if (trimmed.length < 3) return undefined;
+    if (trimmed.length < minSearchLength(trimmed)) return undefined;
     debounceRef.current = setTimeout(async () => {
       const thisRequestId = ++requestIdRef.current;
       setLoading(true);
       try {
         // Runs in the browser (static site, no server): see lib/geocode.js.
-        const results = await searchPlaces(trimmed);
+        const results = await searchPlaces(trimmed, currentNear());
         // A slower earlier request can resolve after a newer one - ignore
         // it so a stale result list doesn't clobber the current typing.
         if (thisRequestId !== requestIdRef.current) return;
@@ -145,7 +160,7 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
 
   // Results only count while there's enough text to have searched for them
   // (typing back down to 1-2 letters hides the old list).
-  const shownSuggestions = query.trim().length >= 3 ? suggestions : [];
+  const shownSuggestions = query.trim().length >= minSearchLength(query.trim()) ? suggestions : [];
   // Empty box -> the dropdown lists recent searches; otherwise live results.
   const showingRecents = query.trim() === '' && recents.length > 0;
   const items = showingRecents ? recents : shownSuggestions;
@@ -175,6 +190,7 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
       engine.flyTo(place.lng, place.lat, place.zoom ?? 14);
     }
     rememberPlace(place);
+    lastPlaceRef.current = place;
     suppressNextSearchRef.current = place.label;
     requestIdRef.current++; // invalidate any lookup already in flight
     setQuery(place.label);
@@ -217,7 +233,39 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
         goToSuggestion(items[activeIndex]);
       } else if (!showingRecents && shownSuggestions[0]) {
         goToSuggestion(shownSuggestions[0]);
+      } else {
+        searchNow();
       }
+    }
+  }
+
+  /* [AI] Purpose: Enter with no list showing used to do nothing. David found
+   *      it after searching a place, zooming in, and pressing Enter again:
+   *      the box still held the place's name but the list was gone.
+   *      Does:    If the box still holds the place last picked, fly back to
+   *               it. Otherwise, if there's enough text, search right away
+   *               (not waiting for the typing pause) and go to the top result.
+   *      Written: 2026-09-30 · Claude Opus 5.5 · requested by David */
+  async function searchNow() {
+    const trimmed = query.trim();
+    const last = lastPlaceRef.current;
+    if (last && trimmed === last.label) {
+      goToSuggestion(last);
+      return;
+    }
+    if (trimmed.length < minSearchLength(trimmed)) return;
+    clearTimeout(debounceRef.current); // this replaces the delayed search
+    const thisRequestId = ++requestIdRef.current;
+    setLoading(true);
+    try {
+      const results = await searchPlaces(trimmed, currentNear());
+      if (thisRequestId !== requestIdRef.current) return; // newer typing won
+      setLoading(false);
+      if (results[0]) goToSuggestion(results[0]);
+    } catch (err) {
+      // Search unavailable: leave things as they are.
+    } finally {
+      if (thisRequestId === requestIdRef.current) setLoading(false);
     }
   }
 

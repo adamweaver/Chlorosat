@@ -19,14 +19,6 @@
   inset: 0; /* Cover the whole home area, behind the stack. */
 }
 
-/* The still star field, drawn by Stars.js like the globe's sky. */
-.skyCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .stars span {
   position: absolute; /* left/top/size come from Stars.js. */
   border-radius: 50%;

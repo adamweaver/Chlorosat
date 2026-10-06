@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import styles from "@/css/Home.module.css";
 
 /* [AI] Purpose: Make a repeatable "random" number sequence, so the stars look scattered but come
@@ -33,47 +30,20 @@ const STARS = Array.from({ length: 60 }, () => {
 });
 
 /* [AI] Purpose: The night-sky background on the home page.
- *      Does:    A canvas full of small, still stars (drawn the same way as the globe's sky on
- *               /map/, so the two pages match), plus 60 brighter dots that twinkle with CSS
- *               (Home.module.css). Redraws the canvas when the window is resized.
+ *      Does:    The still star field is a fixed image (public/stars.svg,
+ *               the same one behind the globe on /map/), shown by the
+ *               .night-sky class (globals.css). On top, 60 brighter dots
+ *               twinkle with CSS (Home.module.css).
  *      Context: Ported from the script in the old web/landing/index.html (CS-038). Decorative only,
- *               so screen readers skip it (aria-hidden).
+ *               so screen readers skip it (aria-hidden). No JavaScript runs.
  *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver
- *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · darker night sky like the globe's: black
- *               background + canvas star field (needs "use client" now) */
+ *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · darker night sky like the globe's
+ *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · star field is now a fixed image instead
+ *               of being redrawn at random on every load/resize (phones re-scattered it whenever
+ *               the keyboard opened); back to a plain server component */
 export default function Stars() {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-    function drawStars() {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // About one star per 1800 square pixels, random size and brightness.
-      const count = Math.floor((canvas.width * canvas.height) / 1800);
-      for (let i = 0; i < count; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const r = Math.random() * 1.2 + 0.2;
-        const brightness = Math.random() * 0.6 + 0.4;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${brightness})`;
-        ctx.fill();
-      }
-    }
-    drawStars();
-    window.addEventListener("resize", drawStars);
-    return () => window.removeEventListener("resize", drawStars);
-  }, []);
-
   return (
-    <div className={styles.stars} aria-hidden="true">
-      <canvas ref={canvasRef} className={styles.skyCanvas} />
+    <div className={`${styles.stars} night-sky`} aria-hidden="true">
       {STARS.map((style, i) => (
         <span key={i} style={style} />
       ))}
