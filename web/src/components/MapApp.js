@@ -35,7 +35,6 @@ const YEARS = ['2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026'];
 
 export default function MapApp() {
   const mapContainerRef = useRef(null);
-  const starsCanvasRef = useRef(null);
   const engineRef = useRef(null);
 
   const [engine, setEngine] = useState(null);
@@ -83,32 +82,6 @@ export default function MapApp() {
     engine && engine.setVegVisible(next);
   }
 
-  // Starfield background, matching the standalone globe's look.
-  useEffect(() => {
-    const canvas = starsCanvasRef.current;
-    if (!canvas) return;
-    function drawStars() {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const count = Math.floor((canvas.width * canvas.height) / 1800);
-      for (let i = 0; i < count; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const r = Math.random() * 1.2 + 0.2;
-        const brightness = Math.random() * 0.6 + 0.4;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${brightness})`;
-        ctx.fill();
-      }
-    }
-    drawStars();
-    window.addEventListener('resize', drawStars);
-    return () => window.removeEventListener('resize', drawStars);
-  }, []);
 
   // [AI] Slider pause. Swiping across the year slider used to start loading
   //      every year it passed over (a full set of NASA tiles and satellite
@@ -130,10 +103,10 @@ export default function MapApp() {
   }
   useEffect(() => () => clearTimeout(yearTimerRef.current), []);
 
-  // Create the real globe engine once, on mount. Strict Mode is off
-  // (next.config.js) so this only runs once per real mount - see that
-  // file's comment for why that matters with a MapLibre/Leaflet-style
-  // library that owns a DOM node directly.
+  // Create the real globe engine on mount, and destroy it on unmount. In
+  // development React's Strict Mode mounts twice on purpose (create ->
+  // destroy -> create), which this cleanup handles; in the built site it
+  // runs once.
   useEffect(() => {
     if (!mapContainerRef.current) return;
     // No onLoadingChange here anymore - David asked for the "Loading
@@ -152,10 +125,9 @@ export default function MapApp() {
 
   return (
     <>
-      <canvas
-        ref={starsCanvasRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
-      />
+      {/* Night sky behind the globe: a fixed image (public/stars.svg, see
+          .night-sky in globals.css), so it never redraws or changes. */}
+      <div className="night-sky" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
       <div
         ref={mapContainerRef}
         style={{ position: 'absolute', inset: 0, background: 'transparent', zIndex: 1 }}
