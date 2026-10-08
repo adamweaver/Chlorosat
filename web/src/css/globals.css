@@ -70,6 +70,16 @@ a {
   outline-offset: 2px;
 }
 
+/* [AI] Every page draws its own dark background, so the white --bg was never
+ *      seen on screen - but Android shows the page's base color behind its
+ *      bottom navigation bar, which turned it into a white strip (Samsung
+ *      Galaxy S24, David, 2026-10-07). The header's near-black instead.
+ *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+html,
+body {
+  background: var(--header-bg);
+}
+
 /* ---------- Page layout ---------- */
 body {
   display: flex;
