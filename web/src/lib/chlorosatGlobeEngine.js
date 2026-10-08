@@ -1883,10 +1883,11 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   const ACCURACY_SOURCE_ID = 'user-accuracy';
   const APPROX_LOCATION_METERS = 1000; // above this, say it's approximate
   const REFINE_LOCATION_MS = 20000;
-  const PRECISE_GRACE_MS = 3000; // how long a rough first fix waits for a precise one
+  const PRECISE_GRACE_MS = 1500; // how long a rough first fix waits for a precise one
   let refineWatchId = null;
   let refineTimer = null;
   let refineMoveListener = null;
+  let locatePress = 0; // counts "find my location" presses (see locate())
 
   function accuracyCircle(lng, lat, meters) {
     const coords = [];
@@ -2143,16 +2144,27 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       }
 
       stopRefiningLocation();
-      // [AI] A rough first answer isn't shown straight away. After switching
-      //      a phone from approximate back to precise location, the browser
-      //      first hands back the old rough position and the precise one a
-      //      moment later, so the map flew to the old spot, said
-      //      "approximate", then snapped across (David, 2026-10-07). Now a
-      //      rough fix waits up to PRECISE_GRACE_MS for a precise one; only if
-      //      none comes is the rough one shown (and then refined as before).
+      // Only the newest press may move the map: a late answer to an earlier
+      // press (the quick request can't be cancelled) is ignored.
+      const press = ++locatePress;
+      // [AI] How a position is found (David, 2026-10-07):
+      //      - Two requests start at the same time: a quick network-based one
+      //        (Wi-Fi / cell towers, usually a second or two) and a precise
+      //        GPS-grade one. They used to run one after the other, so with
+      //        "approximate location" on (where the precise one can never
+      //        succeed) every press first waited out a 6 s timeout.
+      //      - A rough answer (> APPROX_LOCATION_METERS) isn't shown straight
+      //        away: it waits up to PRECISE_GRACE_MS for a precise one. After
+      //        switching a phone from approximate back to precise, the browser
+      //        first hands back the old rough position, and the map used to fly
+      //        there, say "approximate", then snap across. If no precise fix
+      //        comes, the rough one is shown and refined as before.
+      //      - Both requests ask for a fresh fix (maximumAge 0), never one the
+      //        browser remembered from earlier.
       //      Edited: 2026-10-07 · Claude Opus 5.5 · requested by David
       let settled = false;
       let roughest = null; // best rough fix so far, while waiting
+      const failed = { precise: false, quick: false };
       function show(pos) {
         const { longitude, latitude, accuracy } = pos.coords;
         showUserLocation(longitude, latitude, accuracy, true);
@@ -2161,55 +2173,54 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           refineUserLocation(pos.coords, onMessage);
         }
       }
+      function settle(pos) {
+        settled = true;
+        stopRefiningLocation();
+        show(pos);
+      }
       function onSuccess(pos) {
-        if (settled) return;
+        if (settled || press !== locatePress) return;
         if (pos.coords.accuracy <= APPROX_LOCATION_METERS) {
-          settled = true;
-          stopRefiningLocation();
-          show(pos);
+          settle(pos);
           return;
         }
         if (!roughest || pos.coords.accuracy < roughest.coords.accuracy) roughest = pos;
-        if (refineTimer) return; // already waiting
-        refineWatchId = navigator.geolocation.watchPosition(
-          onSuccess,
-          () => {},
-          { enableHighAccuracy: true, maximumAge: 0, timeout: PRECISE_GRACE_MS }
-        );
-        refineTimer = setTimeout(() => {
-          stopRefiningLocation();
-          if (settled) return;
+        if (!refineTimer) {
+          refineTimer = setTimeout(() => { if (!settled) settle(roughest); }, PRECISE_GRACE_MS);
+        }
+      }
+      function onError(which, err) {
+        if (settled || press !== locatePress) return;
+        // Permission denied won't change on a retry - report it now.
+        if (err.code === 1) {
           settled = true;
-          show(roughest);
-        }, PRECISE_GRACE_MS);
+          stopRefiningLocation();
+          reportError(err);
+          return;
+        }
+        console.warn('[chlorosat] locate() request failed:', err.message);
+        failed[which] = true;
+        // Both requests failed: show a rough fix if one came, else the error.
+        if (failed.precise && failed.quick) {
+          if (roughest) settle(roughest);
+          else { settled = true; stopRefiningLocation(); reportError(err); }
+        }
       }
 
-      // enableHighAccuracy:true made this worse, not better - it asks the
-      // OS/browser for a GPS-grade fix, which some desktops either can't
-      // provide at all or gate behind a stricter "precise location"
-      // permission the user never granted, so the request just times out
-      // silently with no marker ever appearing. Try it first since it's
-      // genuinely more precise when it works, but fall back to a normal
-      // (network/IP-based) request - what this used before, and what was
-      // actually working - if the accurate one fails for any reason.
-      // The fallback asks for a fresh fix too (it used to accept one up to
-      // 60 s, then 10 s old, which could hand back an older, rougher position).
+      // Precise (GPS-grade). A watch rather than a one-off request, so it
+      // keeps trying while the quick one answers; stopped once settled.
+      // enableHighAccuracy can't succeed on some desktops or with
+      // "approximate location" on - the quick request covers those.
+      refineWatchId = navigator.geolocation.watchPosition(
+        onSuccess,
+        (err) => onError('precise', err),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+      // Quick (network-based).
       navigator.geolocation.getCurrentPosition(
         onSuccess,
-        (err) => {
-          // Permission denied won't change on a retry - report it now.
-          if (err.code === 1) {
-            reportError(err);
-            return;
-          }
-          console.warn('[chlorosat] high-accuracy locate() failed, retrying with default accuracy:', err.message);
-          navigator.geolocation.getCurrentPosition(
-            onSuccess,
-            reportError,
-            { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
-          );
-        },
-        { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+        (err) => onError('quick', err),
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
       );
     },
 
