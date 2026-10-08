@@ -23,6 +23,15 @@ const nextConfig = {
   //      Dev-only: `npm run build` and the live site are unaffected.
   //      Written: 2026-10-05 · Claude Opus 5.5 · requested by David
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
+
+  // [AI] React's Strict Mode mounts every component twice in `npm run dev`
+  //      (on purpose, to catch bugs). For the globe that meant creating the
+  //      whole MapLibre map (graphics context, style) twice on every load -
+  //      extra startup work that adds up on a phone using the dev server
+  //      (David, 2026-10-07). The chlorosat-map-demo had it off too.
+  //      Dev-only: the built site never double-mounts either way.
+  //      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
+  reactStrictMode: false,
 };
 
 export default nextConfig;

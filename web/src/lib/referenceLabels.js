@@ -19,6 +19,34 @@
 
 export const REF_SOURCE_ID = 'ref';
 
+/* [AI] Purpose: Labels the map tiles are missing, added by hand.
+ *      Does:    A tiny GeoJSON source of label points, drawn by the
+ *               'ref-place-state-extra' layer below in the same style as
+ *               the tiles' state labels.
+ *      Context: OpenFreeMap's tiles have no Hawaii state label near the
+ *               main islands, so the islands showed with no name. The point
+ *               is where Google Maps puts its "Hawaii" label: open ocean
+ *               south of Kauaʻi and Oʻahu, west of the Big Island, centered
+ *               inside the island chain (David, 2026-10-07). Add more labels here the
+ *               same way; the tiles' own copy is hidden in ref-place-state.
+ *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+export const REF_EXTRA_SOURCE_ID = 'ref-extra';
+const EXTRA_STATE_LABELS = [
+  { name: 'Hawaii', abbr: 'HI', lng: -159.3, lat: 19.9 }
+];
+export const REF_EXTRA_SOURCE = {
+  type: 'geojson',
+  data: {
+    type: 'FeatureCollection',
+    features: EXTRA_STATE_LABELS.map(({ name, abbr, lng, lat }) => ({
+      type: 'Feature',
+      properties: { name, abbr },
+      geometry: { type: 'Point', coordinates: [lng, lat] }
+    }))
+  }
+};
+const EXTRA_STATE_NAMES = ['Hawaii', 'Hawaiʻi', "Hawai'i"];
+
 export const REF_SOURCE = {
   type: 'vector',
   url: 'https://tiles.openfreemap.org/planet',
@@ -58,7 +86,18 @@ const STATE_ABBREVIATIONS = {
 };
 
 // English name where the tiles have one, falling back to the local name.
-const NAME = ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
+// [AI] A one-letter English name is treated as missing. OpenStreetMap's
+//      English name for Türkiye is just "T" (a data error upstream), so the
+//      map labeled the country "T". With this rule it falls back to the local
+//      name, "Türkiye". One-letter places like Y (France) still show, because
+//      their local name is one letter too.
+//      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
+const LOCAL_NAME = ['coalesce', ['get', 'name:latin'], ['get', 'name']];
+const NAME = [
+  'case',
+  ['>', ['length', ['coalesce', ['get', 'name_en'], '']], 1], ['get', 'name_en'],
+  LOCAL_NAME
+];
 
 const STATE_ABBREVIATION = ['match', NAME];
 for (const [name, abbr] of Object.entries(STATE_ABBREVIATIONS)) {
@@ -175,9 +214,31 @@ export const REF_LAYERS = [
     type: 'symbol',
     source: REF_SOURCE_ID,
     'source-layer': 'place',
-    filter: ['==', ['get', 'class'], 'state'],
+    // States labeled by hand (REF_EXTRA_SOURCE) are left out here, so a
+    // tile label elsewhere can't show a second copy.
+    filter: ['all',
+      ['==', ['get', 'class'], 'state'],
+      ['!', ['match', NAME, EXTRA_STATE_NAMES, true, false]]
+    ],
     layout: {
       'text-field': ['step', ['zoom'], STATE_ABBREVIATION, STATE_FULL_NAME_ZOOM, NAME],
+      'text-font': REGULAR,
+      'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 6, 13],
+      'text-max-width': 7
+    },
+    paint: {
+      'text-color': 'rgba(255, 255, 255, 0.92)',
+      'text-halo-color': HALO_COLOR,
+      'text-halo-width': 1.1
+    }
+  },
+  {
+    id: 'ref-place-state-extra',
+    type: 'symbol',
+    source: REF_EXTRA_SOURCE_ID,
+    minzoom: 2,
+    layout: {
+      'text-field': ['step', ['zoom'], ['get', 'abbr'], STATE_FULL_NAME_ZOOM, ['get', 'name']],
       'text-font': REGULAR,
       'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 6, 13],
       'text-max-width': 7
@@ -195,7 +256,11 @@ export const REF_LAYERS = [
     'source-layer': 'place',
     filter: ['==', ['get', 'class'], 'country'],
     layout: {
-      'text-field': NAME,
+      // [AI] Countries whose "English" name in the tiles is wrong, by ISO
+      //      code: Nauru's is its local name "Naoero" (found checking every
+      //      country label, David, 2026-10-07). Türkiye ("T") is handled by
+      //      NAME's one-letter rule.
+      'text-field': ['match', ['get', 'iso_a2'], 'NR', 'Nauru', NAME],
       'text-font': BOLD,
       'text-transform': 'uppercase',
       'text-size': ['interpolate', ['linear'], ['zoom'], 1, 9, 5, 14],

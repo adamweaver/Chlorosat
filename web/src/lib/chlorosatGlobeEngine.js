@@ -19,7 +19,7 @@
 //      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/lib/chlorosatGlobeEngine.js
 import * as maplibregl from 'maplibre-gl';
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
-import { REF_SOURCE_ID, REF_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
+import { REF_SOURCE_ID, REF_SOURCE, REF_EXTRA_SOURCE_ID, REF_EXTRA_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
 
 // [AI] The .js copy, not the .mjs original: some servers (including ours at
 //      first deploy) send .mjs as a download type, and browsers then refuse to
@@ -461,6 +461,19 @@ function openedLandMask(waterMask, radius) {
   chamferDistance(toWater, size);
   const toCore = new Float32Array(n);
   for (let i = 0; i < n; i++) toCore[i] = toWater[i] > radius ? 0 : FAR;
+  // [AI] The land past the tile edge may be the "core" of a big land mass
+  //      too, so count the edge as core ground: without this, a strip of
+  //      shore between the water and the tile edge was always judged
+  //      "narrow" and hidden, leaving square see-through notches on
+  //      Manhattan's shore when zoomed in (David, 2026-10-07).
+  //      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const toEdge = Math.min(x, y, size - 1 - x, size - 1 - y) + 1;
+      const i = y * size + x;
+      if (toEdge < toCore[i]) toCore[i] = toEdge;
+    }
+  }
   chamferDistance(toCore, size);
   const out = new Uint8Array(n);
   for (let i = 0; i < n; i++) out[i] = !waterMask[i] && toCore[i] <= radius ? 1 : 0;
@@ -794,6 +807,7 @@ const LIGHT_MAP_LABEL_PAINT = MAP_THEME !== 'light' ? {} : {
   'ref-place-town': { 'text-color': '#333333', 'text-halo-color': 'rgba(255, 255, 255, 0.9)' },
   'ref-place-city': { 'text-color': '#222222', 'text-halo-color': 'rgba(255, 255, 255, 0.9)' },
   'ref-place-state': { 'text-color': '#7b6a86', 'text-halo-color': 'rgba(255, 255, 255, 0.85)' },
+  'ref-place-state-extra': { 'text-color': '#7b6a86', 'text-halo-color': 'rgba(255, 255, 255, 0.85)' },
   'ref-place-country': { 'text-color': '#5c4e66', 'text-halo-color': 'rgba(255, 255, 255, 0.9)' }
 };
 const MAP_LAYER_IDS = MAP_LAYERS.map((layer) => layer.id);
@@ -970,29 +984,46 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           known = true;
           water = isWaterPixel(md[i], md[i + 1], md[i + 2], md[i + 3]);
         }
-        let t;
-        if (!(nearest > 0)) {
-          // NDVI <= 0, or NASA's "no data" (NaN), on land -> no vegetation.
-          // In mapped wetlands (marsh, swamp, tidal flats) a reading at or
-          // below zero, or none at all, almost always means standing water,
-          // so those aren't called "no vegetation" either.
-          if (!known || water || wetland) continue;
+        const x0 = Math.min(255, Math.max(0, uf));
+        const x1 = Math.min(255, Math.max(0, uf + 1));
+        const c00 = vals[y0 + x0], c10 = vals[y0 + x1], c01 = vals[y1 + x0], c11 = vals[y1 + x1];
+        // Solid land: not water or wetland, and (with the vector mask) part
+        // of something at least ~500 m across (see openedLandMask). Only
+        // worked out where it matters - next to a reading <= 0 or no data -
+        // so tiles without any don't pay for openedLandMask.
+        let solid = false;
+        if (!(nearest > 0 && c00 > 0 && c10 > 0 && c01 > 0 && c11 > 0) && known && !water && !wetland) {
           if (vecWater) {
             if (!solidLand) solidLand = openedLandMask(vecWater, gapRadius);
-            if (!solidLand[py * 256 + px]) continue;
+            solid = solidLand[py * 256 + px] === 1;
+          } else {
+            solid = true;
           }
-          t = 0;
-        } else {
-          if (maskAll && water) continue;
-          const x0 = Math.min(255, Math.max(0, uf));
-          const x1 = Math.min(255, Math.max(0, uf + 1));
-          const corner = [vals[y0 + x0], vals[y0 + x1], vals[y1 + x0], vals[y1 + x1]];
-          const weights = [(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy];
+        }
+        // NDVI <= 0, or NASA's "no data" (NaN), on solid land -> no
+        // vegetation. In mapped wetlands (marsh, swamp, tidal flats) a
+        // reading at or below zero, or none at all, almost always means
+        // standing water, so those aren't called "no vegetation" either.
+        if (!(nearest > 0) && !solid) continue;
+        if (nearest > 0 && maskAll && water) continue;
+        let t;
+        {
+          // [AI] Blend the four nearest NASA pixels. On solid land, a
+          //      neighbor with NDVI <= 0 or no data counts as 0 ("no
+          //      vegetation") instead of being left out. It used to be left
+          //      out, and those pixels were painted flat red, so zoomed in
+          //      (e.g. Manhattan) the layer broke into flat 250 m squares with
+          //      stair-step edges; now red fades into the neighboring colors
+          //      across one NASA pixel like everywhere else. Off solid land
+          //      (water edges, islets) only positive readings blend, as before.
+          //      Edited: 2026-10-07 · Claude Opus 5.5 · requested by David
+          const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy), w01 = (1 - fx) * fy, w11 = fx * fy;
           let sum = 0, wsum = 0;
-          for (let k = 0; k < 4; k++) {
-            if (corner[k] > 0) { sum += corner[k] * weights[k]; wsum += weights[k]; }
-          }
-          t = wsum > 0 ? sum / wsum : nearest;
+          if (c00 > 0) { sum += c00 * w00; wsum += w00; } else if (solid) wsum += w00;
+          if (c10 > 0) { sum += c10 * w10; wsum += w10; } else if (solid) wsum += w10;
+          if (c01 > 0) { sum += c01 * w01; wsum += w01; } else if (solid) wsum += w01;
+          if (c11 > 0) { sum += c11 * w11; wsum += w11; } else if (solid) wsum += w11;
+          t = wsum > 0 ? sum / wsum : 0;
           if (hasNoise) {
             const gxF = px / NOISE_GRID_STEP;
             const gx0 = gxF | 0;
@@ -1661,7 +1692,9 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
         // referenceLabels.js). Only relevant to the satellite basemap - OSM
         // already draws its own borders/labels (in each country's own
         // language - David asked to keep that).
-        [REF_SOURCE_ID]: REF_SOURCE
+        [REF_SOURCE_ID]: REF_SOURCE,
+        // Hand-placed labels the tiles lack (e.g. Hawaii); see referenceLabels.js.
+        [REF_EXTRA_SOURCE_ID]: REF_EXTRA_SOURCE
       },
       layers: [
         { id: 'earth-backdrop', type: 'background', paint: { 'background-color': '#25382a' } },
@@ -1833,6 +1866,137 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // panning.
   map.on('render', updateUserLocationMarkerVisibility);
 
+  /* [AI] Purpose: Show "you are here" honestly when the position is rough.
+   *      Does:    showUserLocation puts the blue dot at the position plus a
+   *               light-blue circle as big as the browser's stated accuracy
+   *               (like Google Maps), and zooms to fit that circle - street
+   *               level for a precise fix, a whole area for a rough one.
+   *               refineUserLocation keeps listening for up to 20 s after a
+   *               rough fix and tightens the circle when a better one comes.
+   *      Context: On laptops without GPS the browser often locates by Wi-Fi
+   *               or IP address, which can be off by kilometres, but the map
+   *               used to zoom to street level with a precise-looking dot
+   *               anyway (David, 2026-10-07). pos.coords.accuracy is the
+   *               browser's own estimate in metres (a 68% chance the real
+   *               spot is inside the circle).
+   *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+  const ACCURACY_SOURCE_ID = 'user-accuracy';
+  const APPROX_LOCATION_METERS = 1000; // above this, say it's approximate
+  const REFINE_LOCATION_MS = 20000;
+  let refineWatchId = null;
+  let refineTimer = null;
+  let refineMoveListener = null;
+
+  function accuracyCircle(lng, lat, meters) {
+    const coords = [];
+    const dLat = (meters / 6371000) * (180 / Math.PI);
+    const dLng = dLat / Math.max(0.01, Math.cos((lat * Math.PI) / 180));
+    for (let i = 0; i <= 64; i++) {
+      const t = (i / 64) * Math.PI * 2;
+      coords.push([lng + dLng * Math.cos(t), lat + dLat * Math.sin(t)]);
+    }
+    return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coords] } };
+  }
+
+  function setAccuracyCircle(lng, lat, meters) {
+    const data = accuracyCircle(lng, lat, Math.max(meters || 0, 1));
+    const source = map.getSource(ACCURACY_SOURCE_ID);
+    if (source) {
+      source.setData(data);
+      return;
+    }
+    map.addSource(ACCURACY_SOURCE_ID, { type: 'geojson', data });
+    // Under the place names, so they stay readable.
+    const before = REF_LAYER_IDS.find((id) => map.getLayer(id));
+    map.addLayer({
+      id: 'user-accuracy-fill',
+      type: 'fill',
+      source: ACCURACY_SOURCE_ID,
+      paint: { 'fill-color': '#1a73e8', 'fill-opacity': 0.15 }
+    }, before);
+    map.addLayer({
+      id: 'user-accuracy-line',
+      type: 'line',
+      source: ACCURACY_SOURCE_ID,
+      paint: { 'line-color': '#1a73e8', 'line-opacity': 0.6, 'line-width': 1.5 }
+    }, before);
+  }
+
+  function approxLocationMessage(meters) {
+    const km = meters / 1000;
+    const size = km < 10 ? km.toFixed(1).replace(/\.0$/, '') : Math.round(km).toLocaleString();
+    return `Showing your approximate location (within about ${size} km). ` +
+      'For a more exact spot, turn on Wi-Fi or allow precise location, then try again.';
+  }
+
+  function showUserLocation(lng, lat, accuracy, move) {
+    if (userLocationMarker) {
+      userLocationMarker.setLngLat([lng, lat]);
+    } else {
+      // MapLibre's default Marker is a teardrop pin (only its fill
+      // color is customizable) - a small round dot with a white
+      // ring, like the "you are here" marker in Google Maps, needs
+      // a custom element instead of the built-in pin SVG.
+      const el = document.createElement('div');
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.style.borderRadius = '50%';
+      el.style.background = '#1a73e8';
+      el.style.border = '3px solid #fff';
+      el.style.boxShadow = '0 0 0 2px rgba(26, 115, 232, 0.35), 0 1px 4px rgba(0, 0, 0, 0.5)';
+      userLocationMarker = new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(map);
+    }
+    const draw = () => setAccuracyCircle(lng, lat, accuracy);
+    if (map.isStyleLoaded()) draw(); else map.once('idle', draw);
+    if (!move) return;
+    // Fit the accuracy circle (at least ~150 m across so a precise fix
+    // still lands at street level, zoom 15 at most, as before).
+    const meters = Math.max(accuracy || 0, 75);
+    const dLat = (meters / 6371000) * (180 / Math.PI);
+    const dLng = dLat / Math.max(0.01, Math.cos((lat * Math.PI) / 180));
+    const box = map.getContainer();
+    const phone = box.clientWidth <= 640;
+    map.fitBounds([[lng - dLng, lat - dLat], [lng + dLng, lat + dLat]], {
+      padding: phone ? { top: 70, bottom: 100, left: 16, right: 16 } : 60,
+      maxZoom: 15,
+      duration: 1500
+    });
+  }
+
+  function stopRefiningLocation() {
+    if (refineWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(refineWatchId);
+    clearTimeout(refineTimer);
+    if (refineMoveListener) map.off('movestart', refineMoveListener);
+    refineWatchId = null;
+    refineTimer = null;
+    refineMoveListener = null;
+  }
+
+  // After a rough fix: listen briefly for a better one. Moves the map again
+  // only if the user hasn't moved it themselves in the meantime.
+  function refineUserLocation(first, onMessage) {
+    let best = first.accuracy;
+    let userMoved = false;
+    // originalEvent is set only for moves the user made (drag, wheel, pinch).
+    refineMoveListener = (e) => { if (e.originalEvent) userMoved = true; };
+    map.on('movestart', refineMoveListener);
+    refineWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { longitude, latitude, accuracy } = pos.coords;
+        if (!(accuracy < best * 0.5)) return; // only clearly better fixes
+        best = accuracy;
+        showUserLocation(longitude, latitude, accuracy, !userMoved);
+        if (onMessage) onMessage(accuracy > APPROX_LOCATION_METERS ? approxLocationMessage(accuracy) : null);
+        if (accuracy <= 100) stopRefiningLocation();
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0, timeout: REFINE_LOCATION_MS }
+    );
+    refineTimer = setTimeout(stopRefiningLocation, REFINE_LOCATION_MS);
+  }
+
   return {
     map,
 
@@ -1913,6 +2077,13 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     // Also clears the "find my location" pin, if one is showing - a full
     // reset-the-view action reasonably includes clearing that too, rather
     // than leaving a stale pin from some earlier locate() sitting there.
+    // [AI] Turn north back to the top and level any tilt, keeping the same
+    //      place and zoom. Used by the compass button (SideControls.js).
+    //      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
+    resetNorth() {
+      map.easeTo({ bearing: 0, pitch: 0, duration: 600 });
+    },
+
     recenter() {
       if (userLocationMarker) {
         userLocationMarker.remove();
@@ -1949,8 +2120,12 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     //      outright and never show the permission prompt - the button just
     //      looked broken.
     //      Written: 2026-09-25 · Claude Opus 5.5 · requested by David
-    locate(onError) {
-      const fail = (message) => { if (onError) onError(message); };
+    // [AI] onMessage(text) gets a plain-English note: why location failed,
+    //      or that the position found is only approximate.
+    //      Written: 2026-09-25 · Claude Opus 5.5 · requested by David
+    //      Edited:  2026-10-07 · Claude Opus 5.5 · requested by David · approximate locations
+    locate(onMessage) {
+      const fail = (message) => { if (onMessage) onMessage(message); };
       if (!window.isSecureContext) {
         fail('Location only works on a secure (https://) page. It works on localhost or once the site is deployed, but not over this http:// address.');
         return;
@@ -1966,33 +2141,15 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           : "Couldn't find your location. Check that location services are on, then try again.");
       }
 
+      stopRefiningLocation();
+      let shown = null; // the fix currently on the map
       function onSuccess(pos) {
-        const { longitude, latitude } = pos.coords;
-        // zoom:8 (the old value) is still a whole-region view - barely
-        // closer than the map already starts at, so it didn't read as
-        // "zooming in on me" at all. 15 is close enough to make out
-        // individual streets/blocks, matching what "my exact location"
-        // implies. A small marker also pins the precise point, since a
-        // zoom level alone doesn't show exactly where within the view
-        // you are.
-        map.flyTo({ center: [longitude, latitude], zoom: 15, duration: 1500 });
-        if (userLocationMarker) {
-          userLocationMarker.setLngLat([longitude, latitude]);
-        } else {
-          // MapLibre's default Marker is a teardrop pin (only its fill
-          // color is customizable) - a small round dot with a white
-          // ring, like the "you are here" marker in Google Maps, needs
-          // a custom element instead of the built-in pin SVG.
-          const el = document.createElement('div');
-          el.style.width = '16px';
-          el.style.height = '16px';
-          el.style.borderRadius = '50%';
-          el.style.background = '#1a73e8';
-          el.style.border = '3px solid #fff';
-          el.style.boxShadow = '0 0 0 2px rgba(26, 115, 232, 0.35), 0 1px 4px rgba(0, 0, 0, 0.5)';
-          userLocationMarker = new maplibregl.Marker({ element: el })
-            .setLngLat([longitude, latitude])
-            .addTo(map);
+        const { longitude, latitude, accuracy } = pos.coords;
+        shown = pos.coords;
+        showUserLocation(longitude, latitude, accuracy, true);
+        if (accuracy > APPROX_LOCATION_METERS) {
+          fail(approxLocationMessage(accuracy));
+          refineUserLocation(shown, onMessage);
         }
       }
 
@@ -2004,6 +2161,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       // genuinely more precise when it works, but fall back to a normal
       // (network/IP-based) request - what this used before, and what was
       // actually working - if the accurate one fails for any reason.
+      // The fallback accepts a fix up to 10 s old (was 60 s, which could
+      // hand back an older, rougher position).
       navigator.geolocation.getCurrentPosition(
         onSuccess,
         (err) => {
@@ -2016,7 +2175,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           navigator.geolocation.getCurrentPosition(
             onSuccess,
             reportError,
-            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 }
           );
         },
         { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
@@ -2024,6 +2183,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     },
 
     destroy() {
+      stopRefiningLocation();
       resizeObserver.disconnect();
       map.remove();
     }

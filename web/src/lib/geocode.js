@@ -129,6 +129,22 @@ const DATELINE_FRAMES = {
   'country:Kiribati': [[169, -11.5], [210, 5]],
   'country:New Zealand': [[166.4, -47.4], [178.6, -34.3]],
   'state:Alaska': [[172, 51], [230, 71.5]],
+  // [AI] Hawaii's own box runs ~24° west to Kure Atoll, so only the Big Island
+  //      was kept. This frames Niʻihau to the Big Island (the "Hawaii" label
+  //      sits inside it; see referenceLabels.js). David, 2026-10-07.
+  'state:Hawaii': [[-160.6, 18.8], [-154.7, 22.3]],
+  // [AI] Found by searching every country (David, 2026-10-07): these boxes
+  //      either span the globe (France's includes its overseas territories,
+  //      Tuvalu's crosses the date line), are missing (Palestinian
+  //      Territories), or got shrunk around the capital's island (Cook
+  //      Islands -> Rarotonga, Cape Verde -> Santo Antão, Chagos -> one atoll).
+  'country:France': [[-5.3, 41.2], [9.7, 51.2]], // mainland + Corsica
+  'country:Cook Islands': [[-166.2, -22.2], [-157.0, -8.6]],
+  'country:Cabo Verde': [[-25.6, 14.6], [-22.4, 17.4]],
+  'archipelago:Cape Verde Islands': [[-25.6, 14.6], [-22.4, 17.4]],
+  'country:Tuvalu': [[176.0, -10.9], [179.95, -5.5]],
+  'country:British Indian Ocean Territory': [[71.1, -7.6], [72.6, -5.1]],
+  'country:Palestinian Territories': [[34.2, 31.2], [35.6, 32.6]],
 };
 
 function datelineFrame(p) {
@@ -169,15 +185,43 @@ const FETCH_LIMIT = 10;
  *      the screen center says little about what someone is looking for. location_bias_scale 0.5 keeps famous
  *      places winning over tiny nearby ones ("Paris" still means France).
  *      Written: 2026-09-30 · Claude Opus 5.5 · requested by David */
-async function fetchCandidates(query, near) {
+// `layers` (optional, e.g. ["country", "state"]) limits the answer to those
+// kinds of places; see the "big place" retry in searchPlaces.
+async function fetchCandidates(query, near, layers = null) {
   let url = `${PHOTON_URL}?q=${encodeURIComponent(query)}&limit=${FETCH_LIMIT}&lang=en`;
+  if (layers) url += layers.map((layer) => `&layer=${layer}`).join("");
   if (near) {
     url += `&lat=${near.lat.toFixed(3)}&lon=${near.lng.toFixed(3)}&zoom=${Math.round(near.zoom)}&location_bias_scale=0.5`;
   }
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) throw new Error(`Photon responded ${res.status}`);
   const data = await res.json();
-  return data.features || [];
+  return (data.features || []).map(fixBrokenName);
+}
+
+/* [AI] Purpose: Repair one-letter country names from OpenStreetMap.
+ *      Does:    feature -> the same feature, but a country whose name is a
+ *               single letter gets the name the browser knows for its
+ *               country code (Intl.DisplayNames), e.g. "T" -> "Türkiye".
+ *      Context: OpenStreetMap's English name for Türkiye is just "T" (a data
+ *               error upstream), so search listed it as "T". Only countries
+ *               are changed: real one-letter places (Y, France) stay as they
+ *               are. The map labels have the same fix in referenceLabels.js.
+ *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+let regionNames = null;
+function fixBrokenName(feature) {
+  const p = feature && feature.properties;
+  if (!p || String(p.name || "").length > 1 || p.type !== "country" || !p.countrycode) return feature;
+  try {
+    if (!regionNames) regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+    const name = regionNames.of(String(p.countrycode).toUpperCase());
+    if (name && name.length > 1) return { ...feature, properties: { ...p, name } };
+  } catch (err) {
+    // Older browser without Intl.DisplayNames: fall back to Photon's country field.
+  }
+  return p.country && p.country.length > 1
+    ? { ...feature, properties: { ...p, name: p.country } }
+    : feature;
 }
 
 // Joins candidate lists in order, keeping the first copy of each OSM object.
@@ -255,13 +299,49 @@ function isLowValue(p) {
 }
 
 const SMALL_PLACES = new Set(["village", "hamlet", "isolated_dwelling", "locality", "suburb", "quarter", "neighbourhood"]);
+function isCountry(p) {
+  return p.type === "country" || (p.osm_key === "place" && p.osm_value === "country");
+}
+
+/* [AI] Purpose: Common names OpenStreetMap files under another name.
+ *      Does:    normalized search text -> the name to look up as well. The
+ *               extra lookup asks Photon for countries/states only, and what
+ *               it finds goes near the top (see countryMatch in rerank); a
+ *               nearby exact match still wins when zoomed in (Palestine, TX).
+ *      Context: Found by searching every country (David, 2026-10-07):
+ *               "Palestine" gave only US towns (OSM: "Palestinian
+ *               Territories"), "Macao" an islet in Dubai (OSM: "Macau"),
+ *               "Micronesia" the wider Pacific region instead of the country.
+ *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+const QUERY_ALIASES = {
+  palestine: "Palestinian Territories",
+  macao: "Macau",
+  micronesia: "Federated States of Micronesia",
+  burma: "Myanmar",
+  "dr congo": "Democratic Republic of the Congo",
+  drc: "Democratic Republic of the Congo",
+  "ivory coast": "Côte d'Ivoire",
+  "czech republic": "Czechia",
+  swaziland: "Eswatini",
+  uae: "United Arab Emirates",
+  usa: "United States",
+  "great britain": "United Kingdom",
+  holland: "Netherlands",
+};
+
 function isSmallPlace(p) {
   return p.osm_key === "place" && SMALL_PLACES.has(p.osm_value);
 }
 
+// [AI] A leading "the" doesn't count: OpenStreetMap names countries "The
+//      Gambia" and "The Bahamas", so a search for "Gambia" found nothing
+//      named exactly that and listed a place in Senegal first (found by
+//      checking every country, David, 2026-10-07).
+//      Edited: 2026-10-07 · Claude Opus 5.5 · requested by David
+const withoutThe = (text) => text.replace(/^the /, "");
 function exactName(p, wanted) {
   const name = normalize(p.name);
-  if (name === wanted) return true;
+  if (name === wanted || withoutThe(name) === withoutThe(wanted)) return true;
   // "New York City" -> the city OpenStreetMap calls "New York".
   return wanted.endsWith(" city") && p.type === "city" && name === wanted.slice(0, -5);
 }
@@ -318,7 +398,14 @@ function rerank(nearby, plain, query, near) {
     const dist = near && Number.isFinite(lng) ? distanceKm(near.lng, near.lat, lng, lat) : Infinity;
     const order = plainRank.has(osmId(f)) ? plainRank.get(osmId(f)) : 100 + nearby.indexOf(f);
     const cityRule = wanted.endsWith(" city") && p.type === "city" && exact && normalize(p.name) !== wanted;
-    return { f, p, exact, low, dist, order, cityRule };
+    // [AI] A country whose name (or Photon's English country name, e.g.
+    //      "Nauru" for OSM's "Naoero", "Cape Verde" for "Cabo Verde") is
+    //      exactly the search, or a place found through QUERY_ALIASES, goes
+    //      first: "Jersey" listed Jersey County, Illinois and "Montserrat" a
+    //      Spanish village before the countries (David, 2026-10-07).
+    const countryMatch = p.__alias === true || (isCountry(p) && (exact ||
+      (Boolean(wanted) && withoutThe(normalize(p.country)) === withoutThe(wanted))));
+    return { f, p, exact, low, dist, order, cityRule, countryMatch };
   });
   // Does something well known (not a shop/street, and not just a village or
   // hamlet) have exactly this name? If so, nearby shops don't jump ahead of
@@ -339,7 +426,7 @@ function rerank(nearby, plain, query, near) {
   // things: "東京" -> Tokyo, not Tokyo Bay or Tokyo Station.
   const nonLatin = hasNonLatin(query);
   const tier = (x) =>
-    x.nearExact ? 0 : x.cityRule ? 1 : nonLatin && isPlace(x.p) ? 2 : x.low ? 4 : 3;
+    x.nearExact ? 0 : x.cityRule || x.countryMatch ? 1 : nonLatin && isPlace(x.p) ? 2 : x.low ? 4 : 3;
   return items
     .sort((a, b) => tier(a) - tier(b) || (tier(a) === 0 ? a.dist - b.dist : a.order - b.order))
     .map((x) => x.f);
@@ -368,10 +455,25 @@ export async function searchPlaces(text, near = null) {
   const key = query.toLowerCase() + (bias ? `@${bias.lat.toFixed(0)},${bias.lng.toFixed(0)},${Math.round(bias.zoom)}` : "");
   if (cache.has(key)) return cache.get(key);
 
-  const [nearby, plain] = await Promise.all([
+  const alias = query.includes(",") ? null : QUERY_ALIASES[normalize(query)];
+  const [nearby, plainOnly, aliased] = await Promise.all([
     bias ? fetchCandidates(query, bias) : Promise.resolve([]),
     fetchCandidates(query, null),
+    // Not limited to Photon's country/state layers: it files some countries
+    // under "other" (the Palestinian Territories). Only places named exactly
+    // the alias are kept.
+    alias
+      ? fetchCandidates(alias, null)
+        .then((list) => list
+          .filter((f) => {
+            const p = f.properties || {};
+            return p.osm_key === "place" && normalize(p.name) === normalize(alias);
+          })
+          .map((f) => ({ ...f, properties: { ...f.properties, __alias: true } })))
+        .catch(() => [])
+      : Promise.resolve([]),
   ]);
+  const plain = mergeFeatures(aliased, plainOnly);
   let features = rerank(nearby, plain, query, bias);
 
   const wanted = normalize(query.split(",")[0]);
@@ -383,6 +485,36 @@ export async function searchPlaces(text, near = null) {
       return p.type === "city" && normalize(p.name) === normalize(shorter);
     });
     features = mergeFeatures(cityMatches, features);
+  }
+
+  /* [AI] Purpose: "Big place" retry, for countries and states that Photon's
+   *      normal answer leaves out.
+   *      Does:    If no well-known place (not a village, hamlet, street, shop...)
+   *               has exactly the searched name, ask Photon once more for
+   *               countries and states only, and put any with exactly that
+   *               name first.
+   *      Context: Searching "Samoa" gave ten US/Brazil/PNG hamlets and villages
+   *               named exactly "Samoa" and no country: the country is called
+   *               "Sāmoa" in OpenStreetMap, so Photon ranked the exact
+   *               spellings above it. A typo ("Samoaa") switched Photon to
+   *               fuzzy matching, which ranks by importance, so the country
+   *               showed up then (David, 2026-10-07). normalize() drops the
+   *               macron, so "Sāmoa" counts as an exact match. Searches that
+   *               already find a well-known match (Paris, Norman, Georgia) skip
+   *               this, so most searches still make one request.
+   *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+  const hasNotableExact = features.some((f) => {
+    const p = f.properties || {};
+    return isPlace(p) && !isSmallPlace(p) && exactName(p, wanted);
+  });
+  if (!hasNotableExact && wanted) {
+    try {
+      const bigPlaces = (await fetchCandidates(query.split(",")[0], null, ["country", "state"]))
+        .filter((f) => exactName(f.properties || {}, wanted));
+      features = mergeFeatures(bigPlaces, features);
+    } catch (err) {
+      // Keep the normal results if the retry fails.
+    }
   }
 
   const seen = new Set();

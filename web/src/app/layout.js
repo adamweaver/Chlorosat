@@ -9,6 +9,17 @@ export const metadata = {
   description: "See and compare vegetation health from satellite data.",
 };
 
+// [AI] Browser chrome colors. Phones color their system bars from these: on a
+//      Samsung Galaxy S24 the bottom navigation bar (back/home/recents) was a
+//      white strip under the dark site (David, 2026-10-07). themeColor matches
+//      the header (--header-bg in globals.css); colorScheme "dark" tells the
+//      browser the whole site is dark.
+//      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
+export const viewport = {
+  themeColor: "#0a0c0b",
+  colorScheme: "dark",
+};
+
 /* [AI] Purpose: Shared shell wrapped around every page.
  *      Does:    Renders <html>/<body>, the site header, then the current page.
  *      Context: Next.js App Router root layout. Layout details: CS-014.

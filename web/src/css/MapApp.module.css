@@ -569,6 +569,7 @@
   cursor: pointer;
   color: #f2f3f5;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0; /* the compass is a <button>; match the <div> buttons */
 }
 
 .iconButton:hover {

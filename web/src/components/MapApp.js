@@ -103,10 +103,10 @@ export default function MapApp() {
   }
   useEffect(() => () => clearTimeout(yearTimerRef.current), []);
 
-  // Create the real globe engine on mount, and destroy it on unmount. In
-  // development React's Strict Mode mounts twice on purpose (create ->
-  // destroy -> create), which this cleanup handles; in the built site it
-  // runs once.
+  // Create the real globe engine on mount, and destroy it on unmount.
+  // Strict Mode is off (next.config.mjs), so this runs once in development
+  // too; if it's ever turned back on, the cleanup still handles the extra
+  // create -> destroy -> create.
   useEffect(() => {
     if (!mapContainerRef.current) return;
     // No onLoadingChange here anymore - David asked for the "Loading

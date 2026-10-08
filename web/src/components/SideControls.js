@@ -32,6 +32,34 @@ import styles from "@/css/MapApp.module.css";
 export default function SideControls({ engine, pushedUp }) {
   const [notice, setNotice] = useState(null);
 
+  /* [AI] Purpose: Compass button, shown only while the globe is turned or
+   *      tilted off its normal north-up view (two-finger twist on a phone,
+   *      trackpad rotate, Shift + arrow keys).
+   *      Does:    Follows the map's bearing (how far it's turned) and pitch
+   *               (tilt). The needle turns with the globe so its red tip
+   *               always points north; pressing it calls engine.resetNorth().
+   *               Sits just above the reset button, like Google Maps.
+   *      Written: 2026-10-07 · Claude Opus 5.5 · requested by David */
+  const [view, setView] = useState({ bearing: 0, pitch: 0 });
+  useEffect(() => {
+    const map = engine && engine.map;
+    if (!map) return undefined;
+    const update = () => {
+      // Whole degrees, so React only redraws when the angle visibly changes.
+      const bearing = Math.round(map.getBearing());
+      const pitch = Math.round(map.getPitch());
+      setView((v) => (v.bearing === bearing && v.pitch === pitch ? v : { bearing, pitch }));
+    };
+    update();
+    map.on('rotate', update);
+    map.on('pitch', update);
+    return () => {
+      map.off('rotate', update);
+      map.off('pitch', update);
+    };
+  }, [engine]);
+  const offAxis = view.bearing !== 0 || view.pitch !== 0;
+
   useEffect(() => {
     if (!notice) return undefined;
     const timer = setTimeout(() => setNotice(null), 7000);
@@ -41,6 +69,27 @@ export default function SideControls({ engine, pushedUp }) {
   return (
     <>
     <div className={`${styles.sideStack} ${pushedUp ? styles.sideStackPushed : ''}`}>
+      {offAxis && (
+        <button
+          type="button"
+          className={styles.iconButton}
+          title="Point north"
+          aria-label="Reset rotation to north"
+          onClick={() => engine && engine.resetNorth()}
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            style={{ transform: `rotate(${-view.bearing}deg)` }}
+          >
+            <path d="M12 2.5 L15.2 12 H8.8 Z" fill="#e5484d" />
+            <path d="M12 21.5 L8.8 12 H15.2 Z" fill="#f2f3f5" />
+            <circle cx="12" cy="12" r="1.4" fill="#18191d" />
+          </svg>
+        </button>
+      )}
       <div
         className={styles.iconButton}
         title="Recenter view"
