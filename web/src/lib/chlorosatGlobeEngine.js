@@ -1883,6 +1883,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   const ACCURACY_SOURCE_ID = 'user-accuracy';
   const APPROX_LOCATION_METERS = 1000; // above this, say it's approximate
   const REFINE_LOCATION_MS = 20000;
+  const PRECISE_GRACE_MS = 3000; // how long a rough first fix waits for a precise one
   let refineWatchId = null;
   let refineTimer = null;
   let refineMoveListener = null;
@@ -2142,15 +2143,45 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       }
 
       stopRefiningLocation();
-      let shown = null; // the fix currently on the map
-      function onSuccess(pos) {
+      // [AI] A rough first answer isn't shown straight away. After switching
+      //      a phone from approximate back to precise location, the browser
+      //      first hands back the old rough position and the precise one a
+      //      moment later, so the map flew to the old spot, said
+      //      "approximate", then snapped across (David, 2026-10-07). Now a
+      //      rough fix waits up to PRECISE_GRACE_MS for a precise one; only if
+      //      none comes is the rough one shown (and then refined as before).
+      //      Edited: 2026-10-07 · Claude Opus 5.5 · requested by David
+      let settled = false;
+      let roughest = null; // best rough fix so far, while waiting
+      function show(pos) {
         const { longitude, latitude, accuracy } = pos.coords;
-        shown = pos.coords;
         showUserLocation(longitude, latitude, accuracy, true);
         if (accuracy > APPROX_LOCATION_METERS) {
           fail(approxLocationMessage(accuracy));
-          refineUserLocation(shown, onMessage);
+          refineUserLocation(pos.coords, onMessage);
         }
+      }
+      function onSuccess(pos) {
+        if (settled) return;
+        if (pos.coords.accuracy <= APPROX_LOCATION_METERS) {
+          settled = true;
+          stopRefiningLocation();
+          show(pos);
+          return;
+        }
+        if (!roughest || pos.coords.accuracy < roughest.coords.accuracy) roughest = pos;
+        if (refineTimer) return; // already waiting
+        refineWatchId = navigator.geolocation.watchPosition(
+          onSuccess,
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 0, timeout: PRECISE_GRACE_MS }
+        );
+        refineTimer = setTimeout(() => {
+          stopRefiningLocation();
+          if (settled) return;
+          settled = true;
+          show(roughest);
+        }, PRECISE_GRACE_MS);
       }
 
       // enableHighAccuracy:true made this worse, not better - it asks the
@@ -2161,8 +2192,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       // genuinely more precise when it works, but fall back to a normal
       // (network/IP-based) request - what this used before, and what was
       // actually working - if the accurate one fails for any reason.
-      // The fallback accepts a fix up to 10 s old (was 60 s, which could
-      // hand back an older, rougher position).
+      // The fallback asks for a fresh fix too (it used to accept one up to
+      // 60 s, then 10 s old, which could hand back an older, rougher position).
       navigator.geolocation.getCurrentPosition(
         onSuccess,
         (err) => {
@@ -2175,7 +2206,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           navigator.geolocation.getCurrentPosition(
             onSuccess,
             reportError,
-            { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 }
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
           );
         },
         { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
