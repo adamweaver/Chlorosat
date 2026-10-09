@@ -94,7 +94,10 @@ export default function SideControls({ engine, pushedUp }) {
         className={styles.iconButton}
         title="Recenter view"
         role="button"
-        onClick={() => engine && engine.recenter()}
+        onClick={() => {
+          setNotice(null); // e.g. the "approximate location" note
+          if (engine) engine.recenter();
+        }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <polyline points="1 4 1 10 7 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

@@ -2087,10 +2087,19 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     },
 
     recenter() {
+      // [AI] Clear "find my location" completely: the dot, the accuracy
+      //      circle (it used to stay behind after an approximate fix - David,
+      //      2026-10-08), and any lookup still running, so a late update
+      //      can't bring them back.
+      //      Edited: 2026-10-08 · Claude Opus 5.5 · requested by David
+      locatePress += 1; // answers to an earlier press are now ignored
+      stopRefiningLocation();
       if (userLocationMarker) {
         userLocationMarker.remove();
         userLocationMarker = null;
       }
+      const accuracySource = map.getSource(ACCURACY_SOURCE_ID);
+      if (accuracySource) accuracySource.setData({ type: 'FeatureCollection', features: [] });
       map.flyTo({ center: [-97.475, 20], zoom: homeZoom(), bearing: 0, pitch: 0, duration: 1200 });
     },
 
