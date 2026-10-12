@@ -67,7 +67,7 @@ From [PRINCIPLES.md](PRINCIPLES.md). The team switched from the Leaflet/PNG plan
 | CS-043 | Time-lapse across years | | C | A play button steps through the years automatically | ○ |
 | CS-044 | Longer history (before 2019) | | C | Earlier years appear, with their source labeled | ○ |
 | CS-047 | Change hotspot pins (gained / lost) | | C | Pins come from a real two-year comparison and match the legend | ○ Needs comparison (CS-023) first |
-| CS-055 | Colorblind-friendly vegetation colors | | S | The NDVI scale passes a color-blindness check (e.g. no red↔green-only contrast); legend matches | ○ Planned follow-up from #9 ([PRINCIPLES.md](PRINCIPLES.md)) |
+| CS-055 | Colorblind-friendly vegetation colors | | S | The NDVI scale passes a color-blindness check (e.g. no red↔green-only contrast); legend matches | ○ Planned follow-up from #9 (accessibility) |
 | CS-056 | Remove unused loading-badge styles (`.loadingBadge`, `.spinner` in `Globe.module.css`) | | C | Styles removed; build and phone layout unchanged | ○ Found in #15 |
 
 ## Done
