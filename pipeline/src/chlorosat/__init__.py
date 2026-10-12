@@ -1,6 +1,6 @@
-"""Chlorosat pipeline: satellite bands -> vegetation layers (colored PNGs) + stats JSON.
+"""Future offline pipeline; not used by the live Chlorosat website.
 
-Flow (see docs/ARCHITECTURE.md):
+Intended flow (most stages are not implemented; see pipeline/README.md):
     config    -> which region (regions.toml)
     fetch     -> blue/green/red/NIR + cloud-mask bands for the region's bbox
     ndvi      -> infrared method math        } which methods exist + their colors:
@@ -8,7 +8,7 @@ Flow (see docs/ARCHITECTURE.md):
     composite -> cloud masking + seasonal median (any method)
     render    -> colored PNG in EPSG:3857
     stats     -> yearly + change stats
-    export    -> files into web/public/data/ + manifest.json
+    export    -> experimental PNG + manifest output
 """
 
 __version__ = "0.1.0"

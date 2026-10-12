@@ -1,7 +1,7 @@
 "use client";
 
-import styles from "@/css/MapApp.module.css";
-import useHoverExpand from "@/lib/useHoverExpand";
+import styles from "../Globe.module.css";
+import useHoverExpand from "./useHoverExpand";
 
 /* [AI] Purpose: Bottom-right basemap switcher. Was two pills stacked and
  *      always visible; David asked for it to be more visible and to
@@ -13,7 +13,7 @@ import useHoverExpand from "@/lib/useHoverExpand";
  *      hover) reveals the other option(s) floating just above it; picking
  *      one calls onChange and collapses back down. The floating pills are
  *      always rendered (not conditionally), so the pure-CSS fade/slide in
- *      MapApp.module.css can transition them in and out - only the
+ *      Globe.module.css can transition them in and out - only the
  *      `expanded` class flips.
  *      Update: `onHoverChange` reports the hover/expanded state up to
  *      MapApp, the same pattern YearSelector already uses, so it can push

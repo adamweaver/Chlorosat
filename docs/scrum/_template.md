@@ -20,7 +20,7 @@
 - [ ] Code on a `feature/` or `bugfix/` branch, PR into `main`
 - [ ] CI passes; at least 1 teammate reviewed
 - [ ] Code commented for learners; AI-written parts have the `[AI]` block ([AGENTS.md](../../AGENTS.md))
-- [ ] Docs updated if behavior or the data contract changed
+- [ ] Current docs updated if behavior or architecture changed
 - [ ] UI changes checked at phone width
 - [ ] Backlog row moved to **Done** with PR link
 - [ ] Server-only tasks (Adam): steps recorded in `docs/DEPLOYMENT.md` through a PR

@@ -9,6 +9,6 @@
 - [ ] No secrets or server details (keys, tokens, `.env`, IP addresses) in code, commit messages, or screenshots ([rules](https://github.com/adamweaver/Chlorosat/blob/main/AGENTS.md#security--secrets))
 - [ ] Code is commented for learners
 - [ ] AI-assisted? If yes, AI-written parts have the `[AI]` comment block (see AGENTS.md). What was AI-assisted:
-- [ ] Docs updated (ARCHITECTURE data contract, SETUP, etc.) if behavior changed
+- [ ] Current docs updated (ARCHITECTURE, SETUP, pipeline status, etc.) if behavior changed
 - [ ] UI change? Screenshot + checked at phone width
 - [ ] Backlog row updated

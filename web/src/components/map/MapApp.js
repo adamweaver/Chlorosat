@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { createChlorosatGlobe } from "@/lib/chlorosatGlobeEngine";
+import { createChlorosatGlobe } from "@/lib/map/chlorosatGlobeEngine";
 
-import YearSelector from "@/components/YearSelector";
-import OpacitySlider from "@/components/OpacitySlider";
-import SearchBar from "@/components/SearchBar";
-import SideControls from "@/components/SideControls";
-import Legend from "@/components/Legend";
-import BaseMapToggle from "@/components/BaseMapToggle";
-import styles from "@/css/MapApp.module.css";
+import YearSelector from "./controls/YearSelector";
+import OpacitySlider from "./controls/OpacitySlider";
+import SearchBar from "./controls/SearchBar";
+import SideControls from "./controls/SideControls";
+import Legend from "./controls/Legend";
+import BaseMapToggle from "./controls/BaseMapToggle";
+import styles from "./Globe.module.css";
 
 /* [AI] Purpose: David asked for this app to "go into globe view and be
  *      just like the already existing globe" - so this is no longer a

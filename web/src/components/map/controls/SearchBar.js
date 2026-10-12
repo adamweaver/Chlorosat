@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import styles from "@/css/MapApp.module.css";
-import { searchPlaces, minSearchLength } from "@/lib/geocode";
+import styles from "../Globe.module.css";
+import { searchPlaces, minSearchLength } from "@/lib/map/geocode";
 
 /* [AI] Recent searches. David wanted the search box to show a visitor's
  *      most recent searches as soon as it's clicked, before anything is

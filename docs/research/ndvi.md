@@ -1,5 +1,8 @@
 # Research: NDVI Calculation (CS-003, David)
 
+> Future offline-pipeline research. The live globe uses NASA’s precomputed
+> MODIS NDVI and does not calculate NDVI from source bands.
+
 ## Team findings
 > TODO (David): method, thresholds, sources/citations.
 

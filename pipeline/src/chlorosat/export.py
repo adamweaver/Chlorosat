@@ -1,8 +1,8 @@
-"""Write pipeline output where the website reads it. Owners: CS-011 (Carter, S2); CS-021 (change).
+"""Legacy PNG/manifest export experiment for the future offline pipeline.
 
-Target: web/public/data/, following the data contract in docs/ARCHITECTURE.md:
+The live website does not read this output. The current experimental layout is:
     <region>/<method>/<year>.png|json   and   <region>/<method>/change/<from>_<to>.png|json
-These files ARE committed (decision D6), so keep them small.
+A future site integration and persistent data contract still require team approval.
 """
 
 import json
@@ -12,14 +12,14 @@ from pathlib import Path
 from chlorosat import methods
 from chlorosat.render import save_png
 
-# web/public/data/ (this file is pipeline/src/chlorosat/export.py)
+# Experimental output location; the live website does not read it.
 WEB_DATA_DIR = Path(__file__).resolve().parents[3] / "web" / "public" / "data"
 
 
 # [AI] Purpose: Put one year's overlay + stats where the website expects them.
 #      Does:    Writes <data_dir>/<region_id>/<method_id>/<year>.png and, if `stats` is given,
 #               <year>.json with region/method/year fields added in front. Returns the folder.
-#      Context: CS-011. Stats shape: docs/ARCHITECTURE.md#data-contract (filled by CS-021).
+#      Context: CS-011 experiment. A future integration may choose a different format.
 #      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter
 def write_year(
     region_id: str,
@@ -51,7 +51,7 @@ def write_change(
 #      Does:    Loads manifest.json (or starts fresh), copies methods.py in, upserts the region
 #               (id/name/zoom from regions.toml, bounds/center from the PNG), adds `year` and/or
 #               `change` under layers[method_id] (sorted, unique), stamps "generated", drops "note".
-#      Context: CS-011. Key names follow docs/ARCHITECTURE.md#data-contract.
+#      Context: CS-011 experiment. The live website does not read this manifest.
 #      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter
 def update_manifest(
     region: dict,
@@ -94,9 +94,10 @@ def update_manifest(
     _write_json(path, manifest)
 
 
-# [AI] Purpose: One place for the JSON style the website reads (2-space indent, newline at end).
+# [AI] Purpose: Keep experimental pipeline JSON consistently formatted.
 #      Does:    Creates parent folders and writes `data` as JSON.
 #      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter
+#      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · remove live-site claim.
 def _write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n")

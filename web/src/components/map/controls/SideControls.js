@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import styles from "@/css/MapApp.module.css";
+import styles from "../Globe.module.css";
 
 /* [AI] Purpose: The recenter/locate/zoom button stack from the mockup.
  *      Context: no longer uses react-leaflet's useMap() - now driven

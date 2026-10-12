@@ -1,16 +1,12 @@
 "use client";
 
-import styles from "@/css/MapApp.module.css";
-import useHoverExpand from "@/lib/useHoverExpand";
+import styles from "../Globe.module.css";
+import useHoverExpand from "./useHoverExpand";
 
-/* [AI] Purpose: Year picker matching the mockup's floating top-left slider
- *      (2019-2025 shown, even though the manifest only has real data for
- *      one year so far). Does: a discrete range input over the fixed
- *      display range, snapping to the nearest year that actually exists in
- *      manifest.json rather than showing blank years as data grows the
- *      slider works without code changes - years with no data render dim
- *      and unclickable-looking but the slider still lands on them (parent
- *      falls back to the nearest available year for the actual overlay).
+/* [AI] Purpose: Choose which annual NASA NDVI layer the globe displays.
+ *      Does: Renders a discrete slider over the years supplied by MapApp.
+ *      `availableYears` can disable missing years if the source list later
+ *      becomes sparse; today MapApp supplies every year from 2019–2026.
  *      Was a permanently-open panel; David asked for it to collapse down
  *      to just the current year and pop the slider open on hover (same
  *      idea as BaseMapToggle), with the header always reading "Year 2025"
@@ -22,6 +18,7 @@ import useHoverExpand from "@/lib/useHoverExpand";
  *      state up to MapApp so it can push the opacity panel (which sits
  *      right below this one) further down out of the way while this is
  *      expanded, rather than letting the two overlap.
+ *      Edited: 2026-10-12 · GPT-5.6 Sol · requested by Lucas · remove obsolete manifest behavior.
  *      Update (mobile): open/close now comes from useHoverExpand, so it
  *      still opens on hover with a mouse but opens on tap (and closes on a
  *      tap elsewhere) on a phone, which has no hover.
@@ -32,7 +29,7 @@ import useHoverExpand from "@/lib/useHoverExpand";
  *      layout). MapApp renders a second copy of this control inside that
  *      menu with inMenu set: always open, no hover/tap toggling, and laid out
  *      as a menu section instead of a floating panel. The floating copy is
- *      hidden on phones by CSS (MapApp.module.css phone section).
+ *      hidden on phones by CSS (Globe.module.css phone section).
  *      Written: 2026-09-29 · Claude Opus 5.5 · requested by David */
 export default function YearSelector({ years, year, availableYears, onChange, onHoverChange, inMenu = false }) {
   const hover = useHoverExpand(inMenu ? undefined : onHoverChange);

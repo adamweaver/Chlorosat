@@ -1,12 +1,10 @@
 """Command-line entry point: `uv run chlorosat <command> ...`
 
-Commands:
-    ndvi  --region okc-norman --year 2024 --red B04.tif --nir B08.tif [--offset 1000]
-                                                 (CS-011, S2) NDVI PNG + manifest from band files
-Planned commands:
-    fetch --region okc-norman --year 2024        (CS-010, S2) download bands for one year
-    run   --region okc-norman --years 2019-2025  (CS-020, S3) full pipeline -> web/public/data/
-          [--methods ndvi,visible]               (CS-026, S3) default: every method in methods.py
+Implemented command:
+    ndvi --region okc-norman --year 2024 --red B04.tif --nir B08.tif [--offset 1000]
+
+The full fetch/composite/stats pipeline is future work. It is intentionally
+not advertised as a CLI command until it exists.
 """
 
 import argparse
@@ -14,11 +12,12 @@ import argparse
 from chlorosat import process
 
 
-# [AI] Purpose: Define the commands + options so `chlorosat --help` documents itself.
-#      Does:    Builds an argparse parser with `ndvi`, `fetch` and `run` subcommands.
-#      Context: Scaffold; add options here as features land.
+# [AI] Purpose: Define the implemented commands so `chlorosat --help` stays truthful.
+#      Does:    Builds an argparse parser with the working local-file `ndvi` command.
+#      Context: Add future commands only when their underlying pipeline is implemented.
 #      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
 #      Edited:  2026-09-24 · Claude Fable 5.1 (for Carter) · added `ndvi` (CS-011)
+#      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · removed unimplemented commands
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="chlorosat", description="Satellite bands -> vegetation layers + stats."
@@ -37,24 +36,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Reflectance offset to remove (1000 for L2A scenes from 2022 on)",
     )
 
-    fetch = sub.add_parser("fetch", help="Download satellite bands for one region + year.")
-    fetch.add_argument("--region", required=True, help="Region id from regions.toml")
-    fetch.add_argument("--year", required=True, type=int)
-
-    run = sub.add_parser("run", help="Full pipeline for a range of years.")
-    run.add_argument("--region", required=True, help="Region id from regions.toml")
-    run.add_argument("--years", required=True, help='Year range, e.g. "2019-2025"')
-    run.add_argument("--methods", help='Comma list, e.g. "ndvi,visible" (default: all)')
-
     return parser
 
 
 # [AI] Purpose: What runs when someone types `chlorosat`.
 #      Does:    Parses arguments. With no command, prints help. `ndvi` runs process.ndvi_year.
-#      Context: TODO(CS-010: fetch, CS-020: run). Call functions from the other modules;
-#               keep logic out of this file.
+#      Context: Keep logic out of this file. Future commands belong here only after implementation.
 #      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
 #      Edited:  2026-09-24 · Claude Fable 5.1 (for Carter) · wired `ndvi` (CS-011)
+#      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · describe implemented scope
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)

@@ -1,7 +1,10 @@
 # Research: Satellite Data Sources (CS-002, Kevin)
 
+> Future offline-pipeline research. The live globe currently reads NASA MODIS
+> NDVI directly from GIBS.
+
 ## Team findings
-> TODO (Kevin): sources compared, pros/cons, final pick. Then update decision **D7** in [ARCHITECTURE.md](../ARCHITECTURE.md#decision-log).
+> TODO (Kevin): compare sources and recommend one for the future pipeline.
 
 ## Questions to answer
 - Which source(s)? Resolution? Years available? Revisit frequency?

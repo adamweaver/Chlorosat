@@ -1,10 +1,11 @@
-"""Vegetation detection methods: names, bands, and color classes. Single source of truth.
+"""Future-pipeline vegetation methods, bands, and draft color classes.
 
 We show vegetation two ways (decision D8). They measure different things, so results can differ:
     ndvi    - Infrared: healthy plants strongly reflect near-infrared (NIR) light. Math: ndvi.py
     visible - Visible light: finds green-looking areas in a normal color image. Math: visible.py
 
-export.py copies these dicts straight into manifest.json, so their keys are camelCase (JSON style).
+The live globe does not use this file. The experimental exporter copies these
+dicts into manifest.json, so their keys remain camelCase (JSON style).
 Both methods use the same class keys, colors, and labels, so the legend reads the same way; only
 the breakpoints (min/max) differ, because each index has its own value range.
 Colors: colorblind-friendly brown -> teal (docs/PRINCIPLES.md). ALL VALUES ARE DRAFTS.

@@ -1,4 +1,4 @@
-import styles from "@/css/About.module.css";
+import styles from "./About.module.css";
 
 export const metadata = { title: "About · Chlorosat" };
 
@@ -7,13 +7,12 @@ export const metadata = { title: "About · Chlorosat" };
  *               how search works, privacy, where the data comes from, and the
  *               limits of the data. Scrolls inside <main> with a dark
  *               scrollbar, under the fixed header.
- *      Context: CS-023 (S3). Principles: plain language + transparency. Still
- *               to add from the plan: the two methods (infrared vs visible
- *               light) once visible light is on the map.
+ *      Context: Principles: plain language and transparent limits.
  *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · replaced placeholder with the demo's About text
  *      Edited:  2026-10-07 · Claude Opus 5.5 (for David) · rewritten to match the current globe: no-data areas,
- *               compass, approximate location, smarter search, privacy, limits */
+ *               compass, approximate location, smarter search, privacy, limits
+ *      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · state current feature limits */
 export default function About() {
   return (
     <main className={`${styles.aboutPage} dark-scrollbar`}>
@@ -22,8 +21,9 @@ export default function About() {
           <h1>About Chlorosat</h1>
           <p>
             Chlorosat shows how green the land is, anywhere on Earth, on a 3D
-            globe of satellite photos. Pick a year from 2019 to 2026 to see how
-            vegetation has changed, then zoom in on any place to look closer.
+            globe of satellite photos. Pick one year from 2019 to 2026, then
+            zoom in on any place to look closer. Chlorosat does not yet compare
+            two years or calculate regional statistics.
           </p>
 
           <h2>What the colors mean</h2>

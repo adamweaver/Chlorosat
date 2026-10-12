@@ -1,64 +1,61 @@
-# Goals & Principles
+# Goals and principles
 
 ## Mission
-Make local vegetation health easy to **see, compare, and understand** for people who are not GIS experts.
 
-## Audiences
-| Who | What they need from Chlorosat |
-|---|---|
-| Policymakers | Area-level stats and change over time, to support decisions (parks, tree planting, zoning). |
-| Environmental activists | Clear, shareable visuals of green loss or gain. |
-| Environmental scientists | Transparency: data source, dates, resolution, method. |
-| Homebuyers | A simple "how green is this neighborhood, and is it changing?" |
+Make vegetation health easy to see and understand for people who are not GIS
+experts.
 
-## Goals
-Week numbers assume **week 5 = Sep 21–27** (correct this if the class counts differently).
+The current product is a worldwide viewer of NASA MODIS NDVI. It is not yet a
+comparison or statistics tool.
 
-| When | Goal |
-|---|---|
-| Week 6 (Sep 30, end of Sprint 2) | **Bare-bones version:** one year of real NDVI on the map (locally); placeholder site live over HTTPS. |
-| Week 7 (~Oct 7, mid-Sprint 3) | **Somewhat usable & live:** multiple years + year picker + legend on the real domain. |
-| Week 8 (Oct 14, end of Sprint 3) | **v0.1:** + visible-light method, year comparison, basic stats, auto-deploy on every merge. |
-| Week 12–13 (~Nov 9–22) | **v1.0 complete:** polished, tested, documented, performant. |
+## Audience
 
-## Non-goals (for now)
-- User accounts, logins, saved data.
-- Real-time or on-demand satellite processing on the server.
-- Worldwide coverage out of the box (the design supports it; we only process our region).
-- Professional GIS tooling (raw downloads, band math UI).
+- Policymakers and environmental advocates exploring broad vegetation patterns.
+- Scientists who need transparent source, date and resolution information.
+- Homebuyers and other non-specialists exploring how green an area appears.
 
-## Principles
+MODIS pixels cover roughly 250 m, so the current site must not imply
+property-level or street-level measurement accuracy.
 
-### 1. Plain language first
-- Say "greenness" or "vegetation health" before "NDVI". Explain terms where they appear.
-- Every map color has a legend with words, not just numbers.
-- Method names are plain too: "Infrared" and "Visible light", with a one-line explanation each.
+## Product principles
 
-### 2. Light & fast (small VPS: 1 core, 4 GB RAM, shared with Adam's personal site)
-- **The server does no computing.** It only serves pre-built files. All heavy work happens in the pipeline, on laptops.
-- Budgets: JS < ~300 KB gzipped on first load; each overlay PNG < ~2 MB; page usable in < 3 s on average mobile.
-- Load data only when needed (e.g. a year's PNG when that year is picked).
+### Plain language
 
-### 3. Accessible
-- Map color scales must be **colorblind-friendly** (e.g. brown → teal, not red → green).
-- Text contrast meets WCAG AA. Controls work with a keyboard. Layout works on phones.
+- Explain NDVI as vegetation health before using the acronym.
+- Keep the legend visible and label data sources.
+- Distinguish measured detail from imagery enlarged for display.
 
-### Design
-**Restrained branding:**
-- Brand greens (`#15503a`, `#2e9e63`, `#56c27f`, `#a8e0be`) are **accents only**: header, buttons, links, focus rings.
-- Backgrounds and text are neutral (white/near-black/grays).
-- Keep the map **data colors separate from brand colors**, so the UI never gets confused with the data.
-- Clean, minimal layout. The map is the star.
+### Honest data
 
-### 4. Scale by configuration
-- A new region = a new entry in `pipeline/regions.toml` + running the pipeline. No code changes.
-- The frontend reads regions from `manifest.json`. No hard-coded region logic.
+- NASA supplies the live NDVI values; Chlorosat recolors them.
+- Water and missing-data behavior must be explained.
+- A year selection shows one mid-August composite, not an annual average.
+- Esri Wayback releases are publication snapshots; their photos may have
+  been captured in other years.
+- Do not describe comparison, statistics, visible-light detection or pipeline
+  output as available until they are implemented.
 
-### 5. Transparent & honest data
-- Show the data source, date range, resolution, and **which method** next to every map and stat.
-- Our two methods (infrared vs visible light) can disagree. Don't hide it: explain why in plain words.
-- Clearly mark sample/placeholder data.
+### Static and low-risk hosting
 
-### 6. Learn-first AI use
-- AI helps us understand and move faster. We still write, read, and understand our code.
-- AI-written code is tagged (`[AI]` comment block, see [AGENTS.md](../AGENTS.md)).
+- The VPS serves static files only.
+- Satellite processing and external-data requests never run on the VPS.
+- Avoid adding a backend without team and VPS-owner approval.
+
+### Accessible and restrained design
+
+- Controls must work at phone widths and with a keyboard.
+- Text contrast should meet WCAG AA.
+- Branding remains secondary to the map and data.
+- Never use synthetic fallback vegetation that could look measured.
+
+### Future pipeline
+
+The offline Python pipeline is future work and is not connected to the live
+website. Its purpose is to create transparent, project-owned regional
+products from source bands. Any future output contract or website integration
+requires team approval and documentation before implementation.
+
+### Learn-first AI use
+
+AI supports learning rather than replacing it. AI-written functions use the
+searchable `[AI]` comment format in [AGENTS.md](../AGENTS.md).

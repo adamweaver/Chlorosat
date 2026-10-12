@@ -1,7 +1,7 @@
 "use client";
 
-import styles from "@/css/MapApp.module.css";
-import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from "@/lib/heatColors";
+import styles from "../Globe.module.css";
+import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from "@/lib/map/heatColors";
 
 /* [AI] Purpose: Legend now matches the standalone chlorosat-globe's real
  *      continuous NDVI heat gradient, since this app renders the same
