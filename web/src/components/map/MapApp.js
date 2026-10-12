@@ -12,22 +12,18 @@ import Legend from "./controls/Legend";
 import BaseMapToggle from "./controls/BaseMapToggle";
 import styles from "./Globe.module.css";
 
-/* [AI] Purpose: David asked for this app to "go into globe view and be
- *      just like the already existing globe" - so this is no longer a
- *      Leaflet 2D map. It hosts the SAME real MapLibre globe engine as the
- *      standalone chlorosat-globe prototype (chlorosatGlobeEngine.js: live
- *      NASA GIBS NDVI fetching, per-pixel recoloring, ocean/lake water
- *      masking, off-screen prefetching - not a mockup), with the same dark
- *      UI chrome this app already had wired up to control it.
- *      Does:    Creates one globe instance on mount (client-only - this
- *      component is only ever loaded via next/dynamic ssr:false in
- *      PersistentMap.js, same as the Leaflet version this replaces), tears it down
- *      on unmount, and holds the year/opacity/visibility/basemap state that
- *      drives it. `engine` is null for one render while the globe spins up
- *      - every child component that calls it (SearchBar, SideControls)
- *      guards for that.
+/* [AI] Purpose: The map page's app: the MapLibre globe plus the controls that drive it.
+ *      Does:    Creates one globe instance on mount (chlorosatGlobeEngine.js: live NASA
+ *      GIBS NDVI, per-pixel recoloring, water masking, off-screen prefetching), tears it
+ *      down on unmount, and holds the year/opacity/visibility/basemap state that drives
+ *      it. Client-only: PersistentMap.js loads it with next/dynamic ssr:false.
+ *      `engine` is null for one render while the globe spins up - every child
+ *      component that calls it (SearchBar, SideControls) guards for that.
+ *      Context: Replaced the earlier Leaflet 2D map (2026-09-30), ported from the
+ *      team's chlorosat-map-demo prototype.
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
- *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/MapView.jsx */
+ *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/MapView.jsx
+ *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comment describes the current app */
 
 // 2026 added once NASA's Aug 13, 2026 NDVI composite and Esri's Aug 5, 2026
 // Wayback imagery were both published (checked 2026-09-29).

@@ -1,4 +1,7 @@
-"""Load region settings from regions.toml. Owner: CS-010 (Kevin, S2)."""
+"""Load region settings from regions.toml. Not implemented yet (planned task CS-010).
+
+The working `ndvi` command reads regions.toml itself (process.region_from_toml).
+"""
 
 from pathlib import Path
 

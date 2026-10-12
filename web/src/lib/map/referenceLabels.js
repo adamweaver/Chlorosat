@@ -11,9 +11,12 @@
 //      names, dotted city labels, blue italic ocean/sea names. State/
 //      province labels switch from postal abbreviations to full names at
 //      STATE_FULL_NAME_ZOOM.
-//      Context: every layer id starts with "ref-" (REF_LAYER_IDS) so the
-//      engine can hide them all in "map" (OSM) mode, which already draws its
-//      own labels - same behavior the Esri overlay had.
+//      Context: shown in both the satellite and Map views (the Map view
+//      draws no names of its own); on the light Map view the engine switches
+//      them to dark text (LIGHT_MAP_LABEL_PAINT). Every layer id starts with
+//      "ref-" (REF_LAYER_IDS); the engine uses that list to keep other layers
+//      underneath the labels.
+//      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · Context matches switchBasemap
 //      Written: 2026-09-24 · Claude Opus 5.5 · requested by David
 //      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/lib/referenceLabels.js
 

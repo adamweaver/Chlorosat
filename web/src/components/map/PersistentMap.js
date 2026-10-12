@@ -18,7 +18,7 @@ const MapApp = dynamic(() => import("./MapApp"), {
  *      Does:    Lives in the root layout (layout.js), which Next.js keeps
  *               mounted while you move between pages. Creates the map the
  *               first time /map/ is visited (so / and /about/ stay light,
- *               D11), then only hides it on other pages. visibility:hidden
+ *               with no MapLibre download), then only hides it on other pages. visibility:hidden
  *               (not display:none) keeps its size, so MapLibre doesn't
  *               resize to 0x0 and drop its tiles.
  *      Context: app/map/page.js renders nothing itself; the map shows here.

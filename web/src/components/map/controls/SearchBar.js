@@ -42,10 +42,9 @@ function saveRecents(list) {
  *      guess on Enter. An "x" button appears once there's text, to clear
  *      the query/suggestions and refocus in one click instead of
  *      selecting-and-retyping.
- *      Context: no longer uses react-leaflet's useMap() - now the map is
- *      the real MapLibre globe (chlorosatGlobeEngine.js), driven through
- *      the `engine` prop's fitToBounds()/flyTo() instead.
- *      Update: lookups go to Photon (lib/geocode.js) instead of
+ *      Context: drives the globe (chlorosatGlobeEngine.js) through the
+ *      `engine` prop's fitToBounds()/flyTo()/flyToGlobe().
+ *      Update: lookups go to Photon (lib/map/geocode.js) instead of
  *      OpenStreetMap's Nominatim, whose usage policy forbids
  *      search-as-you-type. Results arrive as { id, label, lng, lat, bbox }.
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
@@ -89,7 +88,7 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
   // The place last picked, so Enter on its (unchanged) name flies back to it.
   const lastPlaceRef = useRef(null);
 
-  // The map view, so places near what's on screen can rank higher (lib/geocode.js).
+  // The map view, so places near what's on screen can rank higher (lib/map/geocode.js).
   function currentNear() {
     const map = engineRef.current && engineRef.current.map;
     const center = map && map.getCenter();
@@ -115,7 +114,7 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
       const thisRequestId = ++requestIdRef.current;
       setLoading(true);
       try {
-        // Runs in the browser (static site, no server): see lib/geocode.js.
+        // Runs in the browser (static site, no server): see lib/map/geocode.js.
         const results = await searchPlaces(trimmed, currentNear());
         // A slower earlier request can resolve after a newer one - ignore
         // it so a stale result list doesn't clobber the current typing.
@@ -180,7 +179,7 @@ export default function SearchBar({ engine, menuOpen = false, onMenuToggle, onSe
     // at a fixed zoom) is what actually lands on "Norman" zoomed in on
     // Norman, instead of a fixed zoom level that happens to show the whole
     // surrounding state for a city-sized result. Results without a usable
-    // box (addresses, or places whose box the geocode route rejected - see
+    // box (addresses, or places whose box lib/map/geocode.js couldn't use - see
     // framingBounds there) fly to a zoom picked for the kind of place.
     if (place.view === 'globe' && engine.flyToGlobe) {
       engine.flyToGlobe(place.lng, place.lat);

@@ -16,7 +16,7 @@
 #                   Nothing on the server is touched. Look for "*deleting" lines.
 
 # [AI] Purpose: One command to publish the site by hand, for when auto-deploy (deploy.yml) is
-#               missing or broken (rollbacks, the week 7 milestone).
+#               missing or broken (rollbacks, outages).
 #      Does:    env vars above -> checks them -> npm ci + npm run build -> rsync web/out/ to the VPS.
 #      Context: CS-013. Same rsync flags as deploy.yml (CS-024). Never prints DEPLOY_TARGET, so the
 #               IP can't end up in a log or screenshot.

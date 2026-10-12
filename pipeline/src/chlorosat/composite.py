@@ -1,4 +1,5 @@
-"""Cloud masking + seasonal composites. Works for ANY method's values. Owner: CS-020 (David, S3).
+"""Cloud masking + seasonal composites. Works for ANY method's values.
+Not implemented yet (planned task CS-020).
 
 Why: one satellite image can be cloudy or unusual. Combining several images from the same season
 (per year) gives fairer year-to-year comparisons.

@@ -1,4 +1,5 @@
-"""Run one method for one year from band files on disk. Owner: CS-011 (Carter, S2).
+"""Run one method for one year from band files on disk.
+Written for CS-011 (Carter); not used by the live site.
 
 Stopgap until `fetch` (CS-010) and `run` (CS-020) land: the bands are GeoTIFFs downloaded by
 hand (e.g. Copernicus Browser), ideally cropped to the region.

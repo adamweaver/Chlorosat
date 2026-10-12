@@ -16,7 +16,7 @@ from chlorosat.render import save_png
 WEB_DATA_DIR = Path(__file__).resolve().parents[3] / "web" / "public" / "data"
 
 
-# [AI] Purpose: Put one year's overlay + stats where the website expects them.
+# [AI] Purpose: Write one year's overlay + stats into the experimental output folder.
 #      Does:    Writes <data_dir>/<region_id>/<method_id>/<year>.png and, if `stats` is given,
 #               <year>.json with region/method/year fields added in front. Returns the folder.
 #      Context: CS-011 experiment. A future integration may choose a different format.
@@ -37,7 +37,7 @@ def write_year(
     return folder
 
 
-# [AI] Purpose: Put a change map + change stats where the website expects them.
+# [AI] Purpose: Write a change map + change stats next to write_year's output.
 #      Does:    STUB. Planned: write <region_id>/<method_id>/change/<from>_<to>.png and .json.
 #      Context: TODO(CS-021). Same JSON style as write_year.
 #      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
@@ -47,7 +47,7 @@ def write_change(
     raise NotImplementedError("TODO(CS-021): write_change")
 
 
-# [AI] Purpose: Tell the website which regions/methods/years exist and how to color them.
+# [AI] Purpose: Record which regions/methods/years were written and how to color them.
 #      Does:    Loads manifest.json (or starts fresh), copies methods.py in, upserts the region
 #               (id/name/zoom from regions.toml, bounds/center from the PNG), adds `year` and/or
 #               `change` under layers[method_id] (sorted, unique), stamps "generated", drops "note".

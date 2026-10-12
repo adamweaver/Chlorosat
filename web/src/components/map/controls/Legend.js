@@ -3,18 +3,15 @@
 import styles from "../Globe.module.css";
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from "@/lib/map/heatColors";
 
-/* [AI] Purpose: Legend now matches the standalone chlorosat-globe's real
- *      continuous NDVI heat gradient, since this app renders the same
- *      globe engine (chlorosatGlobeEngine.js) rather than the old Leaflet
- *      2D map with discrete land-cover classes from methods.py. Pulls the
- *      gradient stops from the SAME heatColors.js constants the engine
- *      actually recolors tiles with, so this can't drift out of sync with
- *      what's really rendered.
- *      Update: made the panel a bit larger and reworded the labels to read
- *      more like a professional map legend - "None/Some/Dense" and "hidden"
- *      were a little casual for what's otherwise a data-viz-style overlay.
+/* [AI] Purpose: Explain the vegetation colors: one continuous low-to-high NDVI
+ *      gradient (the engine scores vegetation on a continuous scale, not in
+ *      classes), plus a "Water / No Data" row for see-through areas.
+ *      Does:    Builds the gradient from the SAME heatColors.js constants the
+ *      engine recolors tiles with, so the legend can't drift from what's drawn.
+ *      Labels use map-legend wording (Low / Moderate / High).
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
- *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/Legend.jsx */
+ *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/Legend.jsx
+ *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comment describes the current legend */
 const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 // Stops mirror HEAT_LUT's breakpoints in chlorosatGlobeEngine.js: red->yellow
 // (0-35%), yellow->green (35-55%), green->dark green (55-100%).

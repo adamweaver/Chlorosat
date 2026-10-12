@@ -1,7 +1,8 @@
-"""Tests for visible.compute_visible_index. OUTLINE, owner CS-026 (Carter).
+"""Tests for visible.compute_visible_index. OUTLINE (planned task CS-026).
 
-TODO(CS-026): once the index is chosen (decision D9), work out the expected numbers by hand for
-each case, write the asserts (np.testing.assert_allclose for floats), and delete the skip line.
+TODO(CS-026): once the index is chosen (docs/research/visible-detection.md), work out the
+expected numbers by hand for each case, write the asserts (np.testing.assert_allclose for
+floats), and delete the skip line.
 Run: uv run pytest -v
 """
 

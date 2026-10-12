@@ -1,7 +1,7 @@
 /* ---------- Home page (/) ----------
    Dark "night sky", the name, the animated satellite, and the Open map button.
    Ported from the old web/landing/index.html (CS-038). Brand greens are accents on a neutral
-   dark gray, as in docs/PRINCIPLES.md#design. */
+   black night sky, as in docs/PRINCIPLES.md#accessible-and-restrained-design. */
 .home {
   flex: 1; /* Fills the space below the header (body is a flex column). */
   position: relative; /* The stars position themselves inside this box. */

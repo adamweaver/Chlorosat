@@ -1,10 +1,11 @@
 """Visible-light method: basic vegetation detection from a normal color (RGB) image.
-Owner: CS-026 (Carter, S3). Which index to use is decision D9 (docs/research/visible-detection.md).
+Not implemented yet (planned task CS-026). docs/research/visible-detection.md proposes VARI
+(GLI as fallback); the choice still needs team approval.
 
 Uses only red, green, blue, like a regular photo, so it works on any color imagery. It measures
 "looks green", not plant health, so it can disagree with NDVI (stressed plants that still look
-green, artificial turf, green paint, shadows, water). The website shows which method is active
-and explains the difference.
+green, artificial turf, green paint, shadows, water). If it ever reaches the website, the site must
+say which method is showing and why the two can differ (docs/PRINCIPLES.md).
 Classes + colors for this method live in methods.py (VISIBLE).
 """
 

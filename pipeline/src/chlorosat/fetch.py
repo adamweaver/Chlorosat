@@ -1,11 +1,12 @@
-"""Find and read satellite bands for a region. Owner: CS-010 (Kevin, S2); multi-scene CS-020 (S3).
+"""Find and read satellite bands for a region. Not implemented yet (planned tasks CS-010;
+multi-scene composites CS-020).
 
-Data source is decision D7 (docs/research/data-sources.md). The recommendation there:
+The data source is researched in docs/research/data-sources.md. The recommendation there:
 Sentinel-2 L2A from Earth Search STAC, which needs no account. Reading Cloud-Optimized GeoTIFFs
 lets us download ONLY our bbox, not whole ~1 GB scenes.
 """
 
-# Settings to confirm once D7 is decided.
+# Settings to confirm once the team picks the data source.
 STAC_URL = "https://earth-search.aws.element84.com/v1"
 COLLECTION = "sentinel-2-l2a"
 
@@ -26,7 +27,7 @@ def search_scenes(bbox: list[float], start: str, end: str, max_cloud: float = 20
 
 # [AI] Purpose: Choose the clearest image when several match.
 #      Does:    STUB. Planned: return the item with the lowest "eo:cloud_cover".
-#      Context: TODO(CS-010). S3 (CS-020) replaces this with a multi-scene composite.
+#      Context: TODO(CS-010). Seasonal composites (CS-020) would replace this.
 #      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
 def pick_best_scene(items: list):
     raise NotImplementedError("TODO(CS-010): pick_best_scene")

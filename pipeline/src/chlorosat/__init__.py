@@ -9,6 +9,9 @@ Intended flow (most stages are not implemented; see pipeline/README.md):
     render    -> colored PNG in EPSG:3857
     stats     -> yearly + change stats
     export    -> experimental PNG + manifest output
+
+TODO(CS-0xx) tags name the original sprint tasks (docs/scrum/, historical plans);
+they are not currently assigned to anyone.
 """
 
 __version__ = "0.1.0"
