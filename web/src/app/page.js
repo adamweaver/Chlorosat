@@ -22,7 +22,7 @@ export default function Home() {
     <main className={`${styles.home} ${outfit.className}`}>
       <Stars />
       <div className={styles.stack}>
-        <h1 className={styles.name}>Chlorosat</h1>
+        <h1 className={styles.name}>Chlorosat?</h1>
         <Satellite />
         <Link href="/map/" className={styles.openMap}>
           Open map
