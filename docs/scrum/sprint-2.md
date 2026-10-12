@@ -1,8 +1,11 @@
-# Sprint 2 (Sep 16 → Sep 30) · ends week 6
+# Sprint 2 (historical: Sep 16 → Sep 30)
+
+> This records the original bounded Leaflet/PNG plan. It is not the current
+> architecture; see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 Work starts **Sep 22** (Sprint 1 ran over), so ~8 hrs each, including Sprint 1 carry-over.
 
-**Sprint goal:** *Bare-bones end-to-end version (week 6 milestone, see [PRINCIPLES](../PRINCIPLES.md#goals)).* One year of real NDVI for OKC/Norman shows on the map locally, CI runs on every PR, and the VPS serves a placeholder page over HTTPS.
+**Sprint goal:** *Bare-bones end-to-end version (week 6 milestone; historical).* One year of real NDVI for OKC/Norman shows on the map locally, CI runs on every PR, and the VPS serves a placeholder page over HTTPS.
 **Capacity:** ~8 hrs per member. Roles rotate for now (may become fixed later).
 **Server work is Adam's only** (his personal VPS, decision D10), so Adam and Kevin swapped lanes this sprint.
 **Pulled forward (Sep 24, for the code review):** CS-024 auto-deploy and CS-038 landing page → home page (Adam), both in #7. See [BACKLOG](../BACKLOG.md).

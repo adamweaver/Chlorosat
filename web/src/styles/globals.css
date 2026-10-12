@@ -1,9 +1,6 @@
-/* Global styles + design tokens. Rules: docs/PRINCIPLES.md#design
-   Brand greens are ACCENTS ONLY (header, buttons, links, focus). Backgrounds/text stay neutral.
-   Map data colors live in manifest.json (from the pipeline), NOT here.
-   Component styles live in src/css/*.module.css. This file only holds tokens,
-   base element styles, and the two shared classes used across components: .glass and .range.
-   TODO(CS-014, Lucas): refine tokens, add spacing/type scale, dark mode if wanted. */
+/* Global styles and design tokens. Brand greens are accents; vegetation
+   colors live in lib/map/heatColors.js. Component-specific styles
+   are colocated in CSS Modules. */
 
 :root {
   /* Brand (branding/branding-sheet.png) */
@@ -184,7 +181,7 @@ button.glass {
  *      MapLibre version. Rather than depend on that toggle behavior,
  *      chlorosatGlobeEngine.js turns compact off entirely and this
  *      restyles the control into a small, muted, always-visible credit
- *      line tucked right under the basemap toggle pill (MapApp.module.css's
+ *      line tucked right under the basemap toggle pill (Globe.module.css's
  *      .basemapStack, bottom-right, right:16/bottom:16) - the same corner
  *      Google Maps keeps its own attribution in, just smaller.
  *      2026-09-29 (David): made it a Google-Maps-style strip sitting flush
@@ -280,7 +277,7 @@ button.glass {
 }
 
 /* [AI] Purpose: Dark gray scrollbar that sits on the page's own background,
- *      matching the recent-searches list (MapApp.module.css .searchSuggestions).
+ *      matching the recent-searches list (Globe.module.css .searchSuggestions).
  *      Used on the About page, which scrolls when its text is taller than the
  *      screen (David, 2026-09-29). The ::-webkit-scrollbar rules cover Chrome,
  *      Edge and Safari; Firefox only understands scrollbar-color, set in the

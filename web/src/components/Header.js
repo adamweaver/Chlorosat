@@ -2,12 +2,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; 
-import styles from "@/css/Header.module.css";
+import styles from "./Header.module.css";
 
 /* [AI] Purpose: Site header shown on every page (branding + navigation).
  *      Does:    Full-width black bar in normal flow: logo + name (home) on the left,
  *               Map and About on the right, with the current page marked.
- *      Context: CS-014. Styles: src/css/Header.module.css. Brand green only as an accent.
+ *      Context: Styles are colocated in Header.module.css. Brand green is only an accent.
  *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-23 · Claude Opus 5.5 (for Lucas) · glass pill with logo
  *      Edited:  2026-09-23 · Grok 4.7 · full-width black bar; dropped the floating pill

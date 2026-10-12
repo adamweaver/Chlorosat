@@ -1,22 +1,21 @@
 import Link from "next/link";
 import localFont from "next/font/local";
-import Satellite from "@/components/Satellite";
-import Stars from "@/components/Stars";
-import styles from "@/css/Home.module.css";
+import Satellite from "@/components/home/Satellite";
+import Stars from "@/components/home/Stars";
+import styles from "@/components/home/Home.module.css";
 
 // Outfit font, self-hosted (no request to Google Fonts). Only the home page uses it.
 // Its license (src/fonts/OFL.txt) must stay next to the font file.
 const outfit = localFont({ src: "../fonts/outfit.woff2", weight: "100 900", display: "swap" });
 
-/* [AI] Purpose: Home page (/): a light first page, so Leaflet, map tiles, and overlay PNGs only
- *               load when someone asks for the map (decision D11).
+/* [AI] Purpose: Home page (/): a light first page, so MapLibre and remote map tiles only
+ *               load after someone opens the map.
  *      Does:    Name, animated satellite, and an "Open map" button that goes to /map/.
- *      Context: CS-038. Ported from the old web/landing/index.html (the placeholder that was live
- *               on chlorosat.com); "Work in progress" became the button. No "use client":
- *               the page is plain HTML + CSS, with no JavaScript of its own.
+ *      Context: The page is server-rendered HTML/CSS; only the Stars canvas is client-side.
  *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · night-sky background like the globe's; Stars is
- *               now a small client component (canvas), the rest of the page is still plain HTML + CSS */
+ *               now a small client component (canvas), the rest of the page is still plain HTML + CSS
+ *      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · describe the current MapLibre app */
 export default function Home() {
   return (
     <main className={`${styles.home} ${outfit.className}`}>

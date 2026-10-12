@@ -1,4 +1,8 @@
-# Research: Tech Stack (CS-004, Carter)
+# Research: Tech stack (historical)
+
+> This records the original Leaflet/PNG recommendation. The current site uses
+> a worldwide MapLibre globe and direct browser access to NASA, Esri and
+> OpenFreeMap. See [ARCHITECTURE.md](../ARCHITECTURE.md) for the active design.
 
 ## Team findings
 *Written 2026-09-24 by Carter*
@@ -17,7 +21,7 @@
 | Hosting | Adam's VPS: nginx + certbot, behind Cloudflare | Already exists, custom domain, HTTPS; static files only | D4, D10 |
 | CI/CD | GitHub Actions: `ci.yml` now, `deploy.yml` (rsync with a locked key) in Sprint 3 | Free on a public repo; integrates with branch protection | D3 |
 
-Decisions are logged in [ARCHITECTURE.md](../ARCHITECTURE.md#decision-log).
+The active architecture is documented in [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ### Options compared
 
@@ -57,7 +61,7 @@ Base maps: OpenStreetMap tiles for streets (follow the [OSM tile usage policy](h
 | Option | Verdict |
 |---|---|
 | **uv** | **Chosen.** One binary installs Python 3.12 itself, resolves deps in seconds, writes `uv.lock` so CI and every laptop get identical versions (`uv sync --locked`). Same commands on Windows, macOS, Linux |
-| pip + venv | Works and is the documented fallback in [SETUP.md](../SETUP.md), but no lockfile by default and teammates must install Python 3.12 themselves |
+| pip + venv | Works, but has no lockfile by default and teammates must install Python 3.12 themselves |
 | conda | Used to be needed for GDAL; rasterio wheels now bundle it, so conda's size and slowness are no longer worth it |
 
 #### 5. Hosting

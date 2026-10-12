@@ -1,10 +1,10 @@
 # AGENTS.md — Rules for AI Agents
 
-Chlorosat maps vegetation from satellite data over a normal map, compares years, and shows simple stats. It uses two detection methods: **infrared (NDVI)** and **visible light (RGB)**. Their results can differ, and the site explains why.
-Region: OKC/Norman first, built to add more regions by config. Audience: policymakers, environmental activists and scientists, homebuyers (mostly non-technical).
+Chlorosat shows NASA MODIS NDVI on a worldwide MapLibre globe with satellite and street basemaps. It currently shows one selected year; comparison, statistics, visible-light detection, and pipeline-fed layers are not implemented.
+`pipeline/` is a future offline processing package and is not used by the live website. Audience: policymakers, environmental activists and scientists, homebuyers (mostly non-technical).
 Team: Group E, CS3203-001 (Adam, Carter, David, Kevin, Lucas). Students using AI **to learn**, not to replace learning.
 
-**Read before working:** [README.md](README.md), [docs/PRINCIPLES.md](docs/PRINCIPLES.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/BACKLOG.md](docs/BACKLOG.md), current sprint in [docs/scrum/](docs/scrum/).
+**Read before working:** [README.md](README.md), [docs/PRINCIPLES.md](docs/PRINCIPLES.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and [docs/BACKLOG.md](docs/BACKLOG.md). Files in [docs/scrum/](docs/scrum/) are historical plans.
 
 ## Rules
 1. **Be concise.** Short answers save reading time and tokens. No filler.
@@ -13,8 +13,8 @@ Team: Group E, CS3203-001 (Adam, Carter, David, Kevin, Lucas). Students using AI
 4. **No code or file edits without explicit permission.** Suggest first. Wait for a clear "yes".
 5. **Never edit README.md** unless explicitly told to.
 6. **Check the docs** (README, this file, PRINCIPLES, ARCHITECTURE) when relevant. Follow them.
-7. **Think about the bigger picture.** Check how a change affects other parts (especially the [data contract](docs/ARCHITECTURE.md#data-contract)) to avoid conflicts.
-8. **Major changes or decisions:** ask the user whether the team has approved them first (e.g. new dependency, changing the architecture, data contract, or deploy setup).
+7. **Think about the bigger picture.** Check how a change affects the globe, external data sources, static deployment, and future pipeline.
+8. **Major changes or decisions:** ask the user whether the team has approved them first (e.g. new dependency, architecture, pipeline integration, or deploy setup).
 9. **Write for learners.** Well-commented, simple, readable code. Prefer clear over clever.
 10. **Tag AI-written code** with the comment block below.
 11. **Protect secrets.** Follow [Security & secrets](#security--secrets) in every file, commit, PR, and workflow.
@@ -67,11 +67,11 @@ When a human later changes AI-written code, add a line: `Edited: YYYY-MM-DD · <
 ## Repo map
 | Path | What |
 |---|---|
-| `pipeline/` | Python (uv). Downloads satellite bands → vegetation index per method → colored PNG + stats JSON. Runs on laptops, **never on the VPS**. |
-| `pipeline/regions.toml` | Region list (id, name, bounding box). New region = new entry. |
-| `pipeline/src/chlorosat/methods.py` | Detection methods + their class colors (single source of truth; copied into `manifest.json`). |
-| `web/` | Next.js static site (JavaScript). Home page `/` (light, no Leaflet: D11), map `/map/` (Leaflet), about `/about/`. |
-| `web/public/data/` | Pipeline output the site reads (committed). Shape defined by the data contract. |
+| `pipeline/` | Future Python offline pipeline (uv). Only a manual local-file NDVI path works; it is not connected to the site. |
+| `pipeline/README.md` | Exact implemented and missing pipeline features. |
+| `web/` | Next.js static site: home `/`, worldwide MapLibre globe `/map/`, and About `/about/`. |
+| `web/src/components/map/` | Live globe components, controls, and map-specific styles. |
+| `web/src/lib/map/` | MapLibre engine, remote tiles, NDVI recoloring, water masks, and caches. |
 | `web/out/` | Built site (gitignored). **This folder is what goes on the VPS.** |
 | `deploy/` | nginx site config + manual deploy script (server side is **Adam only**). |
 | `.github/workflows/` | `ci.yml` (lint, tests, build on every PR). `deploy.yml`: deploys every merge to `main` (runs `deploy/deploy.sh`). Logs are public. |
@@ -95,7 +95,7 @@ npm run build                     # static build -> web/out/
 ## Conventions
 - Branches: `feature/<name>`, `bugfix/<name>`. PR into `main`, 1+ review, CI must pass (enforced by a ruleset on `main`: no direct pushes, no force pushes).
 - Commits: short and clear (`Add NDVI calculation`), not `added stuff`.
-- **Never commit raw satellite data** (`pipeline/data/`). Only small processed output in `web/public/data/`.
+- **Never commit raw satellite data** (`pipeline/data/`). No pipeline output is currently part of the website.
 - The site is a static export: pages are built once at build time. No API routes, and nothing that needs a running server (the VPS only serves files).
 - **The VPS is Adam's personal server** (it also hosts his personal site). Only Adam does server-side work: VPS, nginx, DNS/domain, HTTPS, deploy keys, GitHub settings/secrets. Never tell teammates to run commands on the VPS. Draft changes in the repo (`deploy/`, `docs/DEPLOYMENT.md`) for Adam to review and apply.
-- Keep branding restrained: see [PRINCIPLES](docs/PRINCIPLES.md#design).
+- Keep branding restrained: see [PRINCIPLES](docs/PRINCIPLES.md#accessible-and-restrained-design).

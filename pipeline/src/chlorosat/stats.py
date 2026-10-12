@@ -1,7 +1,4 @@
-"""Numbers for the stats panel, for any method. Owner: CS-021 (Lucas, S3).
-
-Output shapes: <year>.json and change JSON in docs/ARCHITECTURE.md#data-contract.
-"""
+"""Future year and change statistics. Not implemented or used by the live site."""
 
 import numpy as np
 

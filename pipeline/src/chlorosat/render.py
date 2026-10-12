@@ -13,13 +13,14 @@ WEB_MERCATOR = CRS.from_epsg(3857)
 WGS84 = CRS.from_epsg(4326)
 
 
-# [AI] Purpose: Leaflet draws in Web Mercator (EPSG:3857); other projections won't line up.
+# [AI] Purpose: Prepare a raster for common Web Mercator map renderers (EPSG:3857).
 #      Does:    Reprojects `array` onto a 3857 grid with `pixel_size_m` pixels. With `bbox`
 #               ([west, south, east, north] in lon/lat) the grid is anchored to the region, so
-#               every year and method of a region lands on the same pixels (data contract).
+#               every year and method of a region lands on the same pixels.
 #               Returns (array, bounds); bounds = [[south, west], [north, east]] in lat/lng.
 #      Context: CS-011. NaN means no data, in and out. Pixels are averaged when shrinking.
 #      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter
+#      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · remove retired Leaflet contract.
 def to_web_mercator(array, transform, crs, pixel_size_m: float = 30, bbox=None):
     array = np.asarray(array, dtype=np.float32)
     if bbox is None:

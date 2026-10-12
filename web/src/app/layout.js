@@ -1,12 +1,12 @@
-import "@/css/globals.css";
+import "@/styles/globals.css";
 import Header from "@/components/Header";
-import PersistentMap from "@/components/PersistentMap";
+import PersistentMap from "@/components/map/PersistentMap";
 
 // Page <title> and description (used by browsers + search engines).
 // The favicon comes from src/app/icon.svg automatically (Next.js convention).
 export const metadata = {
   title: "Chlorosat",
-  description: "See and compare vegetation health from satellite data.",
+  description: "Explore vegetation health from satellite data.",
 };
 
 // [AI] Browser chrome colors. Phones color their system bars from these: on a

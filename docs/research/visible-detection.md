@@ -1,9 +1,12 @@
 # Research: Visible-Light Vegetation Detection (CS-026, Carter)
 
+> Future pipeline research. Visible-light detection is not implemented and
+> the live globe currently shows NASA MODIS NDVI only.
+
 ## Team findings
 *Written 2026-09-24 by Carter (AI-assisted draft)*
 
-**Proposed decision (D9):** use **VARI** on the **same Sentinel-2 scenes** as NDVI, with **GLI** as the tested fallback if VARI is noisy on real OKC/Norman imagery. Needs team confirmation at Sprint 3 planning (Sep 30); then update D9 in [ARCHITECTURE.md](../ARCHITECTURE.md#decision-log).
+**Historical proposal:** use **VARI** on the **same Sentinel-2 scenes** as NDVI, with **GLI** as the tested fallback if VARI is noisy on real OKC/Norman imagery. A future pipeline implementation still needs team confirmation.
 
 ### Which index
 All candidates use only red, green, blue, so they measure "looks green", not plant health.

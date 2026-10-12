@@ -1,6 +1,5 @@
-"""Smoke tests: quick checks that the package, config, and color classes are wired up correctly."""
+"""Smoke tests: quick checks that the future pipeline scaffold stays internally consistent."""
 
-import json
 import tomllib
 from itertools import pairwise
 
@@ -63,14 +62,3 @@ def test_method_classes_are_consistent():
             for c in table:
                 expected = look.setdefault(c["key"], (c["color"], c["label"]))
                 assert (c["color"], c["label"]) == expected, f"'{c['key']}' differs by method"
-
-
-# [AI] Purpose: The website legend reads classes from manifest.json. If they drift from
-#               methods.py, the legend would lie about what the map colors mean.
-#      Does:    Checks manifest.json "methods"/"defaultMethod" equal methods.py.
-#      Context: If this fails, update both together (docs/ARCHITECTURE.md#data-contract).
-#      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
-def test_manifest_matches_methods():
-    manifest = json.loads((export.WEB_DATA_DIR / "manifest.json").read_text())
-    assert manifest["methods"] == methods.METHODS
-    assert manifest["defaultMethod"] == methods.DEFAULT_METHOD

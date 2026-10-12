@@ -1,150 +1,156 @@
 # Architecture
 
-## Big picture
+This document describes the code that runs now. The older bounded
+Leaflet/PNG architecture has been retired.
+
+Component diagrams: [UML.md](UML.md).
+
+## Runtime overview
+
+```text
+                                   ┌─ NASA GIBS: MODIS NDVI
+Browser ── Next.js static site ────┼─ Esri: imagery and Wayback
+   ▲                               ├─ OpenFreeMap/OpenMapTiles: vector map
+   │                               └─ Photon: place search
+nginx serves web/out/
 ```
- ON LAPTOPS (heavy work)                        IN GIT                       ON THE VPS (light work)
-┌──────────────────────────┐          ┌─────────────────────────┐         ┌────────────────────────┐
-│ pipeline/ (Python)       │  writes  │ web/public/data/        │  build  │ nginx serves web/out/  │
-│ fetch → ndvi / visible   │ ───────► │  manifest.json          │ ──────► │ (plain static files,   │
-│  → composite → render    │          │  <region>/<method>/...  │  (CI)   │  HTTPS, no compute)    │
-│  → stats → export        │          │ web/src/ (Next.js)      │         └────────────────────────┘
-└──────────────────────────┘          └─────────────────────────┘                    ▲
-        ▲                                                                  Browser: Leaflet map
-  Satellite STAC API                                                       + base map tiles (Esri/OSM)
-  (source TBD, see research/)
-```
 
-**Why this shape:** the VPS is tiny, so it never processes imagery. The website is a **static export**: Next.js turns our React pages into plain HTML/JS/CSS files in `web/out/`. nginx just hands those files out. That's cheap, fast, and hard to break, and it barely touches the personal site that shares the VPS.
+The site has no backend. Next.js produces plain HTML, JavaScript and CSS in
+`web/out/`; nginx only serves those files.
 
-## Two detection methods (D8)
-We show vegetation two ways. Users switch between them on the map.
+The browser contacts the external map services directly. This makes the live
+site independent of `pipeline/`.
 
-| Method id | Name on site | Uses | Measures | Code |
-|---|---|---|---|---|
-| `ndvi` (default) | Infrared (NDVI) | red + near-infrared | Plant **health** (healthy leaves reflect lots of NIR) | `ndvi.py` |
-| `visible` | Visible light | red + green + blue (a normal photo) | Areas that **look green** | `visible.py` |
+## Routes and map lifetime
 
-They **will disagree sometimes**, e.g. stressed plants that still look green, artificial turf, green-painted roofs, shadows, water. That's expected. The site always labels which method is showing, and the About page explains why they differ. Which visible-light index to use is decision **D9** ([research/visible-detection.md](research/visible-detection.md)).
+`web/src/app/layout.js` renders the header, the selected route and
+`PersistentMap`.
 
-## Pipeline (`pipeline/src/chlorosat/`)
-| Module | Job |
+- `/` is the lightweight landing page.
+- `/about/` explains the data and controls.
+- `/map/` is represented by `app/map/page.js`, which intentionally returns
+  `null`. The file is still required so Next.js creates the route.
+
+`PersistentMap` dynamically creates `MapApp` on the first visit to `/map/`.
+It hides rather than unmounts the map on other routes, preserving loaded
+tiles and state when the user returns.
+
+`MapApp` owns the selected year, opacity, visibility and basemap. It creates
+one globe engine and passes its methods to the controls.
+
+## Globe engine
+
+`web/src/lib/map/chlorosatGlobeEngine.js` creates the MapLibre map and
+performs all map-specific work:
+
+- Uses a globe projection with worldwide movement and no regional bounds.
+- Fetches precomputed MODIS Terra 16-day NDVI tiles from NASA GIBS.
+- Decodes NASA’s indexed PNG palette into NDVI values.
+- Recolors NDVI with Chlorosat’s continuous red-to-green display scale.
+- Masks water with OpenMapTiles vectors, with a NASA mask fallback.
+- Enlarges the native data at close zooms; it does not create additional
+  measurement detail.
+- Fetches Esri imagery, optionally choosing a Wayback release near August 13
+  of the selected year.
+- Draws the Map basemap from OpenFreeMap vector tiles.
+- Supplies search, movement, geolocation and basemap methods to the UI.
+
+“Satellite” and “Map” are two basemap presentations on the same MapLibre
+instance. Both remain global and both can show the same NDVI overlay.
+
+## Data processing and caching
+
+NASA, not Chlorosat, calculates the NDVI used by the live site. The browser
+does display processing only: decode, recolor, water-mask, smooth and upload
+each requested tile to MapLibre.
+
+Cache levels:
+
+1. Raw NASA tiles use browser Cache Storage on secure origins, capped at
+   1,500 entries. This survives a refresh.
+2. Decoded source tiles and recolored output bitmaps use bounded in-memory
+   caches. These are lost on a full refresh.
+3. Keeping `PersistentMap` mounted preserves the in-memory caches while
+   navigating between routes.
+4. Selecting another year clears date-dependent in-memory results.
+
+Therefore a refresh normally rebuilds visible colored tiles, but can rebuild
+them from locally cached NASA responses instead of downloading them again.
+
+## External data
+
+| Purpose | Source |
 |---|---|
-| `config.py` | Load `regions.toml` (region id, name, bbox, zoom). |
-| `methods.py` | **Single source of truth** for each method: name, description, bands, class breakpoints + colors. |
-| `fetch.py` | Search the satellite catalog (STAC) for a region + date range; read only the needed bands (blue, green, red, NIR, cloud mask) inside the bbox. |
-| `ndvi.py` | Infrared method: NDVI = (NIR − Red) / (NIR + Red), range −1…1. |
-| `visible.py` | Visible-light method: an RGB vegetation index (D9). |
-| `composite.py` | Cloud masking + seasonal median of many scenes (works for any method). |
-| `render.py` | Index array → colored PNG, reprojected to **EPSG:3857** (Web Mercator, what Leaflet uses) so it lines up with the map. |
-| `stats.py` | Summary stats per year + change between two years (any method). |
-| `export.py` | Write files into `web/public/data/` and update `manifest.json`. |
-| `cli.py` | Command-line entry: `uv run chlorosat ...`. |
+| Vegetation | NASA GIBS, MODIS Terra L3 NDVI 16-day product |
+| Satellite basemap | Esri World Imagery and Wayback |
+| Street basemap, labels, borders, water | OpenFreeMap, OpenMapTiles and OpenStreetMap contributors |
+| Place search | Photon by komoot |
 
-**Size tip:** OKC/Norman at 10 m is about 5,000 × 6,300 pixels. For the overview PNG, downsample (e.g. to 30 m) and use a **palette (indexed) PNG** with a few color classes. That keeps files small (< 2 MB). If we need more detail later, switch to XYZ tiles.
+External availability and usage terms affect the map. Attribution is shown
+inside the map.
 
-## Website (`web/src/`)
-| Path | Job |
+## Static deployment
+
+`npm run build` creates `web/out/`. The deploy workflow sends only that
+folder to the VPS. The VPS does not run Node, Python or satellite processing.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Future offline pipeline
+
+`pipeline/` is a future, separate offline processing path. It is **not used
+by the live site**.
+
+The intended future workflow is:
+
+```text
+source satellite bands
+  → fetch/crop
+  → cloud mask and seasonal composite
+  → NDVI and visible-light indexes
+  → render layers and calculate statistics
+  → export a format chosen for a future website integration
+```
+
+Only a manual local-file NDVI path is implemented. Fetching, composites,
+visible-light detection, statistics, change maps, full multi-year execution
+and website integration are not implemented.
+
+There is currently no active pipeline-to-website data contract.
+`pipeline/export.py` retains the earlier PNG/manifest experiment, but its
+output is not committed and the website has no reader for it. A future
+integration must be designed and approved before treating that format as a
+contract.
+
+Exact module status: [pipeline/README.md](../pipeline/README.md).
+
+## Implemented and missing features
+
+Implemented:
+
+- Worldwide NDVI globe for one selected year.
+- Satellite and street basemaps.
+- Year, opacity and visibility controls.
+- Search, geolocation and map navigation.
+- Responsive static pages and deployment.
+
+Not implemented:
+
+- Two-year comparison or change detection.
+- Statistics.
+- Visible-light vegetation detection.
+- Method selection.
+- Pipeline-fed map layers.
+- Region-specific processing or downloadable outputs.
+- Restoring map state from a shared URL.
+
+## Decisions
+
+| Decision | Status |
 |---|---|
-| `app/layout.js` | Page shell (html, header, fonts). |
-| `app/page.js` | Home page (`/`): name, animated satellite, **Open map** button (D11). Plain HTML + CSS, no Leaflet. |
-| `app/map/page.js` | Map page (`/map/`): renders `MapApp`. |
-| `app/about/page.js` | Plain-language "what is this / how to read it / why the methods differ". |
-| `components/MapApp.js` | `"use client"` wrapper: loads `manifest.json`, holds the map settings (view/method, year, opacity, base map), passes them down. |
-| `components/MapView.js` | Leaflet map. **Client-only** (Leaflet needs `window`), loaded with `next/dynamic` + `ssr: false` from `MapApp`. Locked to the region bounds. |
-| `components/MapOverlay.js` | Lays out the floating "glass" controls on top of the map. |
-| `components/VegetationLayer.js` | Draws one method + year PNG (or a change PNG) with `ImageOverlay` at the region bounds. **Stub.** |
-| `components/MethodToggle.js`, `YearSelector.js`, `OpacitySlider.js`, `BaseMapToggle.js`, `SearchBar.js`, `Legend.js`, `StatsPanel.js`, `Header.js` | UI controls. Most update state but don't change the map yet; `StatsPanel` is a stub. |
-| `components/Icon.js`, `IconButton.js` | Shared inline-SVG icons + icon-only button. |
-| `components/Satellite.js`, `Stars.js` | Home page art (CSS animations, no JavaScript). |
-| `css/` | `globals.css` (design tokens, shared `.glass` / `.range`) + one CSS Module per component or page. |
-| `fonts/` | Outfit (home page only, loaded with `next/font/local`) + its license. |
-| `lib/data.js` | Fetch `manifest.json` (done) + stats JSON (stub). |
-
-**Why a separate home page (D11):** the first page people see stays light. Leaflet, map tiles, and overlay PNGs only load on `/map/`, which helps low-end phones. The home page was ported from the old hand-deployed placeholder (CS-038).
-
-## Data contract
-The **only** link between pipeline and website. Both sides must follow it. **Changing it = major change** (team approval).
-
-```
-web/public/data/
-├── manifest.json
-└── <region-id>/
-    └── <method-id>/                 ndvi | visible
-        ├── <year>.png               colored overlay (EPSG:3857)
-        ├── <year>.json              stats for that year
-        └── change/
-            ├── <y1>_<y2>.png        change overlay (diverging colors)
-            └── <y1>_<y2>.json       change stats
-```
-Example: `okc-norman/ndvi/2024.png`, `okc-norman/visible/change/2019_2024.json`.
-
-`manifest.json`: what exists, and how to color it.
-```jsonc
-{
-  "version": 1,
-  "generated": "2026-09-22",
-  "note": "SAMPLE ...",                 // optional; only on sample data (export.py removes it)
-  "defaultMethod": "ndvi",
-  "methods": [{                         // copied from pipeline/src/chlorosat/methods.py (single source of truth)
-    "id": "ndvi",
-    "name": "Infrared (NDVI)",
-    "description": "Plant health, measured from near-infrared light ...",
-    "bands": ["red", "nir"],
-    "classes":       [{ "key": "bare", "min": 0.0, "max": 0.2, "color": "#8c510a", "label": "Bare ground / built up" }, ...],
-    "changeClasses": [{ "key": "lost", "min": -2.0, "max": -0.1, "color": "#8c510a", "label": "Lost greenness" }, ...]
-  }, { "id": "visible", ... }],
-  "regions": [{
-    "id": "okc-norman",
-    "name": "Oklahoma City & Norman, OK",
-    "bounds": [[35.13, -97.86], [35.74, -97.2]], // [[south, west], [north, east]], Leaflet order (lat, lng)
-                                                 // = the PNGs' exact extent (from render.py), not just regions.toml
-    "center": [35.435, -97.53],                  // midpoint of bounds
-    "zoom": 10,                                  // from regions.toml
-    "layers": {                                  // per method: which files exist (can differ by method)
-      "ndvi":    { "years": [2019, 2024], "changes": [[2019, 2024]] },
-      "visible": { "years": [2024],       "changes": [] }
-    }
-  }]
-}
-```
-
-`<method>/<year>.json`
-```jsonc
-{
-  "region": "okc-norman", "method": "ndvi", "year": 2024,
-  "source": "sentinel-2-l2a", "dateRange": ["2024-06-01", "2024-08-31"], "scenes": 7, "pixelSizeM": 30,
-  "mean": 0.41, "median": 0.43,                   // average index value (method's own scale)
-  "validFraction": 0.97,                          // share of pixels that were not cloud/no-data
-  "classes": { "water": 0.03, "bare": 0.18, "sparse": 0.25, "moderate": 0.32, "dense": 0.22 } // share of valid area
-}
-```
-
-`<method>/change/<y1>_<y2>.json`
-```jsonc
-{ "region": "okc-norman", "method": "ndvi", "from": 2019, "to": 2024, "threshold": 0.1,
-  "meanChange": -0.02, "gainedFraction": 0.08, "lostFraction": 0.12, "stableFraction": 0.80 }
-```
-
-Rules:
-- **One grid per region.** Every PNG of a region (all years, all methods) covers the same `bounds` with the same pixel grid. That's what lets one `bounds` value work for every layer, and lets change maps subtract year A from year B pixel by pixel. (If D9 picks a different image source for the visible method, revisit this rule.)
-- **Same class keys, colors, and labels across methods** (a CI test checks this), so the legend reads the same. Only breakpoints differ, because each index has its own value range. A method may skip a class (visible light has no "water").
-- JSON keys are `camelCase` (JS-friendly).
-- Breakpoints, colors, and change thresholds are **drafts** in `methods.py`. Finalize them with the CS-003 / CS-026 research and update this doc.
-
-## Decision log
-Status `Proposed` = suggested during outlining; needs team OK. Change to `Accepted` (with date) once agreed. `Accepted (VPS owner)` = Adam's call, because it's his server.
-
-| # | Decision | Why | Status |
-|---|---|---|---|
-| D1 | Static site + offline pipeline (no backend server) | Tiny VPS; cheap, fast, reliable | Proposed 2026-09-22 |
-| D2 | Colored PNG overlays (Leaflet `ImageOverlay`), not Leaflet.heat | Accurate per-pixel values; light on client. Heatmaps show point density, not values | Proposed 2026-09-22 |
-| D3 | CI builds + auto-deploys `web/out/` via rsync with a locked-down key (rrsync: write-only to `/var/www/chlorosat.com`); `deploy/deploy.sh` fallback | Meets CI/CD; no built files in git; key can't touch the rest of the VPS | Proposed 2026-09-22 (key lock: Accepted by VPS owner); built 2026-09-24 (CS-024, #7) |
-| D4 | nginx (already on Adam's VPS) + certbot for HTTPS | Existing server; Chlorosat is one extra site block | Accepted 2026-09-22 (VPS owner) |
-| D5 | JavaScript (not TypeScript); uv for Python (venv+pip fallback) | Lower learning curve | Proposed 2026-09-22 |
-| D6 | Processed output committed to `web/public/data/`; raw data never committed | CI can build without running the pipeline | Proposed 2026-09-22 |
-| D7 | Satellite data source | See [research/data-sources.md](research/data-sources.md) | **Open** (Kevin) |
-| D8 | Two detection methods: infrared (NDVI, default) + visible light, shown separately with differences explained | Team intent; visible light works on any color imagery, NDVI measures plant health | Team intent 2026-09-22; confirm details |
-| D9 | Visible-light method: **VARI** `(G − R) / (G + R − B)` on the same Sentinel-2 scenes as NDVI; GLI as fallback | Same data + grid as NDVI, so differences come from the method; see [research/visible-detection.md](research/visible-detection.md) | Proposed 2026-09-24 (Carter, #6); team to confirm at Sprint 3 planning |
-| D10 | Hosting is on Adam's personal VPS (shared with his personal site). All server-side work is **Adam only**: VPS, nginx, DNS/domain, HTTPS, deploy keys, GitHub settings/secrets | Adam owns the server; protects his personal site | Accepted 2026-09-22 (VPS owner) |
-| D11 | Landing page is the home page (`/`); the map is its own page (`/map/`), opened with an **Open map** button | First load stays light (no Leaflet/overlays until asked), which helps low-end devices | Proposed 2026-09-24; built for the code review (CS-038, #7); team to confirm |
-| D12 | Repo is **public**. Secrets live only in the GitHub `production` environment; the VPS IP counts as a secret (placeholders like `<host>` in the repo) | Professor's request (peer reviews); free branch protection + environments. Cloudflare hides the IP, so leaking it would bypass that. See [DEPLOYMENT.md → Security](DEPLOYMENT.md#security) | Accepted 2026-09-24 (professor's request; VPS owner) |
+| Static Next.js export served by nginx | Active |
+| Worldwide MapLibre globe | Approved by the team for the current product |
+| Browser reads NASA MODIS NDVI directly | Active |
+| Satellite/Map switch changes basemap layers, not geographic bounds | Active |
+| Future offline pipeline remains in the repo but disconnected | Approved; future work |
+| Pipeline output format and website integration | Open; requires team approval |

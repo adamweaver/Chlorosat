@@ -1,4 +1,4 @@
-import styles from "@/css/Home.module.css";
+import styles from "./Home.module.css";
 
 /* [AI] Purpose: Make a repeatable "random" number sequence, so the stars look scattered but come
  *               out the same on every build.

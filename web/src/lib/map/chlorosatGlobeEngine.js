@@ -1727,7 +1727,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // toggle in this version - it was rendering as a permanently-open, full-
   // width bar. Rather than fight that, compact is off here and the whole
   // control is instead restyled in globals.css into a small, muted credit
-  // line tucked directly under the basemap toggle (MapApp.module.css's
+  // line tucked directly under the basemap toggle (Globe.module.css's
   // .basemapStack), the way Google Maps keeps its own attribution.
   // [AI] Imagery credit that follows what's on screen, the way Google Maps
   //      rewrites "Imagery ©2025 ..." as you move (David's idea, replacing a
@@ -1764,7 +1764,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // [AI] Phones: the credit line is cut to one line (globals.css) and a tap
   //      opens the full text; another tap closes it. The class goes on the
   //      map's parent so the legend and basemap button (siblings of the map)
-  //      can move up out of the way while it's open (MapApp.module.css).
+  //      can move up out of the way while it's open (Globe.module.css).
   //      Tapping a link inside the credits still just follows the link.
   //      Written: 2026-09-29 · Claude Opus 5.5 · requested by David
   map.getContainer().addEventListener('click', (e) => {

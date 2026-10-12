@@ -1,4 +1,4 @@
-import styles from "@/css/Home.module.css";
+import styles from "./Home.module.css";
 
 /* [AI] Purpose: The animated Chlorosat satellite on the home page (the brand mark, drawn big).
  *      Does:    Inline SVG: solar panels, body, a swaying leaf antenna, and three "signal" arcs

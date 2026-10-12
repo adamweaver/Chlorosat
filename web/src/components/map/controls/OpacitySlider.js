@@ -1,7 +1,7 @@
 "use client";
 
-import styles from "@/css/MapApp.module.css";
-import useHoverExpand from "@/lib/useHoverExpand";
+import styles from "../Globe.module.css";
+import useHoverExpand from "./useHoverExpand";
 
 /* [AI] Purpose: Collapsible opacity control below the year slider.
  *      Context: added the eye icon (show/hide the vegetation layer
@@ -25,7 +25,7 @@ import useHoverExpand from "@/lib/useHoverExpand";
  *      layout). MapApp renders a second copy of this control inside that
  *      menu with inMenu set: always open, no hover/tap toggling, and laid out
  *      as a menu section instead of a floating panel. The floating copy is
- *      hidden on phones by CSS (MapApp.module.css phone section).
+ *      hidden on phones by CSS (Globe.module.css phone section).
  *      Written: 2026-09-29 · Claude Opus 5.5 · requested by David */
 export default function OpacitySlider({ opacity, onChange, visible, onToggleVisible, pushedDown, inMenu = false }) {
   const hover = useHoverExpand();

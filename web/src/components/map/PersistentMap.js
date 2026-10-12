@@ -3,11 +3,11 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import styles from "@/css/page.module.css";
+import styles from "./PersistentMap.module.css";
 
 // The globe engine uses `window`, which doesn't exist during the build, so
 // MapApp only loads in the browser.
-const MapApp = dynamic(() => import("@/components/MapApp"), {
+const MapApp = dynamic(() => import("./MapApp"), {
   ssr: false,
   loading: () => <p className={styles.mapLoading}>Loading map…</p>,
 });
