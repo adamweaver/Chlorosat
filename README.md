@@ -112,7 +112,7 @@ The Python pipeline has its own setup; see [Future pipeline](#future-pipeline).
 3. **Make one focused change**, committing in small steps with short, clear messages (`Add year label`, not `stuff`).
 4. **Run the checks** from [Setup](#setup) step 3 for the part you changed.
 5. **Open a pull request** into `main`. The PR template asks what changed, how to test it, and whether AI helped.
-6. **Merge** after CI passes and one teammate approves. The site then deploys automatically. Delete your branch.
+6. **Merge** after CI passes and one teammate approves. The site then deploys automatically. Delete your branch and move the task to **Done** in the backlog with the PR number.
 
 Ask the team first before adding a dependency or changing the architecture, data sources or deployment.
 Using AI tools? Follow [AGENTS.md](AGENTS.md) and tag AI-written code with its `[AI]` comment block.
@@ -142,7 +142,7 @@ Using AI tools? Follow [AGENTS.md](AGENTS.md) and tag AI-written code with its `
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): how the site fits together and why
 - [UML.md](docs/UML.md): diagrams of the components and data flow
 - [SETUP.md](docs/SETUP.md): full developer setup and common problems
-- [BACKLOG.md](docs/BACKLOG.md): what works, what's planned, and maintenance tasks
+- [BACKLOG.md](docs/BACKLOG.md): every task with its owner, acceptance criteria and status; milestones
 - [PRINCIPLES.md](docs/PRINCIPLES.md): goals, audiences and design rules
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md): how merges reach the server, and the security rules
 - [docs/research/](docs/research/) and [docs/scrum/](docs/scrum/): earlier research and sprint plans (historical; some describe the retired Leaflet design)
