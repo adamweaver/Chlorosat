@@ -37,23 +37,24 @@ From [PRINCIPLES.md](PRINCIPLES.md). The team switched from the Leaflet/PNG plan
 ## Who's doing what
 | Person | Sprint 2 (Sep 16 → 30) | Sprint 3 (Sep 30 → Oct 14) |
 |---|---|---|
-| Adam | CS-005 ✅ · CS-013 ✅ · CS-024 ✅ · CS-038 ✅ | CS-023 ◐ · CS-027 ✅ · CS-054 ✅ |
+| Adam | CS-005 ◐ · CS-013 ✅ · CS-024 ✅ · CS-038 ✅ | CS-023 ◐ · CS-027 ✅ · CS-054 ✅ |
 | Carter | CS-004 ✅ · CS-011 ✅ | CS-026 ◐ (research done) |
 | David | CS-003 ○ · CS-012 ✅ | CS-020 ○ · CS-050 ✅ (globe) · CS-051 ✅ · CS-052 ✅ |
-| Kevin | CS-002 ○ · CS-010 ○ | CS-022 ◐ (finished by others) |
+| Kevin | CS-002 ○ · CS-010 ○ | CS-022 ○ |
 | Lucas | CS-001 ◐ · CS-014 ◐ · CS-049 ✅ | CS-021 ○ · CS-053 ✅ |
 
 ## To do
 | ID | Task | Owner | Pri | Done when | Status / PR |
 |---|---|---|---|---|---|
 | CS-001 | Finalize feature scope & backlog priorities | Lucas | M | Priorities in this file agreed by the team at a sprint review | ◐ Started in #4; priorities for the globe-era scope not confirmed yet |
-| CS-002 | Data source research for the future pipeline | Kevin | S | [data-sources.md](research/data-sources.md) filled in with a recommendation | ○ Still a TODO |
+| CS-002 | Data source research for the future pipeline | Kevin | S | [data-sources.md](research/data-sources.md) filled in with a recommendation | ○ Open |
 | CS-003 | NDVI research write-up (method, thresholds, sources) | David | S | [ndvi.md](research/ndvi.md) questions answered | ○ Still a TODO |
-| CS-010 | Pipeline: fetch bands for a region + year (`fetch.py`, `config.py`) | Kevin | C | `uv run chlorosat fetch --region okc-norman --year 2024` saves band GeoTIFFs and prints the scene ID + cloud % | ○ Future pipeline; stubs only |
+| CS-005 | Repo scaffold, docs, CI; team confirms the architecture decisions | Adam | M | Scaffold on `main`; the team has discussed the [decisions](ARCHITECTURE.md#decisions) and their statuses are updated | ◐ Scaffold, docs and CI done (#3); decisions not discussed yet |
+| CS-010 | Pipeline: fetch bands for a region + year (`fetch.py`, `config.py`) | Kevin | C | `uv run chlorosat fetch --region okc-norman --year 2024` saves band GeoTIFFs and prints the scene ID + cloud % | ○ Open |
 | CS-014 | UX: wireframes + feedback (header, tokens and layout done) | Lucas | S | Wireframes + notes from 1–2 non-technical people in `docs/design/`; layout works at phone width | ◐ Tokens, header, layout in #4; no wireframes or feedback in the repo |
 | CS-020 | Pipeline: cloud-masked seasonal composites + multi-year `run` command | David | C | `run --region okc-norman --years 2019-2025` writes one layer + stats per year | ○ Future pipeline; stubs only |
 | CS-021 | Pipeline: yearly stats + change maps | Lucas | C | Stats/change output with tests on tiny hand-made arrays | ○ Future pipeline; stubs only |
-| CS-022 | Web: map controls + stats panel | Kevin | M | Year, legend and opacity controls work by keyboard and at phone width; stats panel shows numbers for the year on screen | ◐ Year slider, legend, opacity done (#4 Lucas, #9 David). Method toggle retired (one data source). Stats panel waits on statistics (CS-031) |
+| CS-022 | Web: map controls + stats panel | Kevin | M | Year, legend and opacity controls work by keyboard and at phone width; stats panel shows numbers for the year on screen | ○ Open |
 | CS-023 | Web: compare two years, About page, usability test | Adam | M | Two years can be compared on the globe; About page checked by a non-technical person; notes from 3 testers in `docs/design/usability-1.md` | ◐ About page done (#9, #14). Comparison and usability test not started |
 | CS-026 | Visible-light method: pick the index, `visible.py`, tests | Carter | C | Tests pass; index choice approved by the team; 3–5 real spots where it disagrees with NDVI written up | ◐ Research done (#6): VARI proposed. Implementation not started |
 | CS-031 | Statistics for a place or area (e.g. neighborhood / ZIP) | | S | Picking a place shows simple vegetation numbers for it | ○ |
@@ -75,7 +76,6 @@ From [PRINCIPLES.md](PRINCIPLES.md). The team switched from the Leaflet/PNG plan
 |---|---|---|---|---|
 | CS-000 | Repo created, README, branding assets | Team | Repo exists with README + logo | #2 |
 | CS-004 | Tech stack research write-up | Carter | [tech-stack.md](research/tech-stack.md) filled in: choices, options compared, trade-offs, sources | #6 |
-| CS-005 | Repo scaffold, docs, CI; decisions recorded | Adam | Scaffold on `main`; decisions recorded in [ARCHITECTURE.md](ARCHITECTURE.md#decisions) | #3, #14 |
 | CS-011 | Pipeline: NDVI → colored PNG → export + manifest (local files) | Carter | `test_ndvi.py` passes; PNG < 2 MB; manifest lists the year | #8 |
 | CS-012 | Web: map with a vegetation layer | David | The map shows real vegetation data; `npm run build` works. *Delivered as the globe (CS-050) instead of Leaflet + pipeline PNGs* | #4, #9 |
 | CS-013 | Server (Adam only): domain/DNS, nginx + HTTPS, locked deploy key, `deploy.sh`, branch protection | Adam | `https://chlorosat.com` serves the site over HTTPS; the personal site still works; `deploy.sh` deploys in one command; the deploy key refuses a shell | #5 |

@@ -107,7 +107,7 @@ The Python pipeline has its own setup; see [Future pipeline](#future-pipeline).
 2. **Branch** from an up-to-date `main`:
    ```bash
    git switch main && git pull
-   git switch -c feature/<name>      # or bugfix/<name>
+   git switch -c feature/<name>      # or fix/<name>, docs/<name>
    ```
 3. **Make one focused change**, committing in small steps with short, clear messages (`Add year label`, not `stuff`).
 4. **Run the checks** from [Setup](#setup) step 3 for the part you changed.

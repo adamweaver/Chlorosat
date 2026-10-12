@@ -17,7 +17,7 @@
 | Retrospective | Last day | Fill in the section below. |
 
 ## Definition of Done (applies to every task)
-- [ ] Code on a `feature/` or `bugfix/` branch, PR into `main`
+- [ ] Code on a `feature/`, `fix/` or `docs/` branch, PR into `main`
 - [ ] CI passes; at least 1 teammate reviewed
 - [ ] Code commented for learners; AI-written parts have the `[AI]` block ([AGENTS.md](../../AGENTS.md))
 - [ ] Current docs updated if behavior or architecture changed

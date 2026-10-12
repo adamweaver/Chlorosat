@@ -45,11 +45,11 @@ See [_template.md](_template.md#definition-of-done-applies-to-every-task).
 | ID | Owner | Result | PR |
 |---|---|---|---|
 | CS-001 | Lucas | ◐ Started; priorities for the current scope not yet confirmed by the team. Carried over | #4 |
-| CS-002 | Kevin | ○ Not started. Carried over as future-pipeline research | |
+| CS-002 | Kevin | ○ Open | |
 | CS-003 | David | ○ Not started. Carried over as future-pipeline research | |
 | CS-004 | Carter | ✅ Done | #6 |
-| CS-005 | Adam | ✅ Scaffold merged; decisions later recorded in ARCHITECTURE.md | #3, #14 |
-| CS-010 | Kevin | ○ Not started. Now future-pipeline work | |
+| CS-005 | Adam | ◐ Scaffold, docs and CI merged; the team hasn't discussed the decisions yet. Carried over | #3 |
+| CS-010 | Kevin | ○ Open | |
 | CS-011 | Carter | ✅ Done (local band files → NDVI PNG + manifest) | #8 |
 | CS-012 | David | ✅ Leaflet map built (Lucas, #4), then replaced by David's worldwide globe with live NASA NDVI (Oct 6) | #4, #9 |
 | CS-013 | Adam | ✅ Done | #5 |
@@ -59,7 +59,7 @@ See [_template.md](_template.md#definition-of-done-applies-to-every-task).
 
 ## Review
 - Demoed:
-- Not finished (→ carried over): CS-001, CS-002, CS-003, CS-010, CS-014 (see Outcome above)
+- Not finished (→ carried over): CS-001, CS-002, CS-003, CS-005, CS-010, CS-014 (see Outcome above)
 
 ## Retrospective
 | Went well | Didn't go well | Change next sprint |

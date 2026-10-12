@@ -154,6 +154,6 @@ Not implemented:
 | Satellite/Map switch changes basemap layers, not geographic bounds | Active |
 | Future offline pipeline remains in the repo but disconnected | Approved; future work |
 | Pipeline output format and website integration | Open; requires team approval |
-| Landing page is the home page; map code loads only on `/map/` | Active |
-| Every merge to `main` deploys automatically, with a deploy key locked to the site folder | Active ([DEPLOYMENT.md](DEPLOYMENT.md)) |
-| Public repository; secrets only in the GitHub `production` environment; the server IP is treated as secret | Active ([AGENTS.md](../AGENTS.md#security--secrets)) |
+| Landing page is the home page; map code loads only on `/map/` | Proposed; in place, team to discuss |
+| Every merge to `main` deploys automatically, with a deploy key locked to the site folder | Proposed; in place, team to discuss ([DEPLOYMENT.md](DEPLOYMENT.md)) |
+| Public repository; secrets only in the GitHub `production` environment; the server IP is treated as secret | Repo public at the professor's request; secrets rules in place, team to discuss ([AGENTS.md](../AGENTS.md#security--secrets)) |

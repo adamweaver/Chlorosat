@@ -50,7 +50,7 @@ Current status of every task: [BACKLOG.md](../BACKLOG.md).
 |---|---|---|---|
 | CS-020 | David | ○ Not started; David built the globe instead (CS-050). Now future-pipeline work | |
 | CS-021 | Lucas | ○ Not started. Now future-pipeline work | |
-| CS-022 | Kevin | ◐ Year slider, legend and opacity done by Lucas (#4) and David (#9). Method toggle retired (one data source). Stats panel waits on statistics | #4, #9 |
+| CS-022 | Kevin | ○ Open | |
 | CS-023 | Adam | ◐ About page done (David #9, Lucas #14). Year comparison and usability test not started | #9, #14 |
 | CS-024 | Adam | ✅ Done early in Sprint 2 | #7 |
 | CS-026 | Carter | ◐ Research done (VARI proposed); implementation not started | #6 |
@@ -71,7 +71,7 @@ Current status of every task: [BACKLOG.md](../BACKLOG.md).
 
 ## Review
 - Demoed:
-- Not finished (→ carried over): CS-020, CS-021, CS-022 (stats panel), CS-023 (comparison, usability test), CS-026 (implementation)
+- Not finished (→ carried over): CS-020, CS-021, CS-022, CS-023 (comparison, usability test), CS-026 (implementation)
 - Scope decisions for v1.0:
 
 ## Retrospective
