@@ -23,7 +23,7 @@ export default function Header() {
       <div className={styles.bar}>
         <Link href="/" className={styles.brand}>
           <Image src="/icon.svg" alt="" width={26} height={26} priority />
-          <span>Chlorosat</span>
+          <span>Chlorosat?</span>
         </Link>
         <nav aria-label="Main">
           <Link href="/map/" aria-current={onMap ? "page" : undefined}>
