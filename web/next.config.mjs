@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Static export: `npm run build` writes plain HTML/CSS/JS to web/out/.
-  // No Node server needed on the VPS; nginx just serves the files (decision D1).
+  // No Node server needed on the VPS; nginx just serves the files (docs/ARCHITECTURE.md).
   output: "export",
 
   // Next's image optimizer needs a server, so turn it off for static export.

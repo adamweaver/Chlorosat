@@ -50,8 +50,8 @@ performs all map-specific work:
 - Masks water with OpenMapTiles vectors, with a NASA mask fallback.
 - Enlarges the native data at close zooms; it does not create additional
   measurement detail.
-- Fetches Esri imagery, optionally choosing a Wayback release near August 13
-  of the selected year.
+- Fetches Esri imagery from the Wayback release closest to August 13 of the
+  selected year (falls back to current imagery if Wayback is unavailable).
 - Draws the Map basemap from OpenFreeMap vector tiles.
 - Supplies search, movement, geolocation and basemap methods to the UI.
 
@@ -117,7 +117,7 @@ visible-light detection, statistics, change maps, full multi-year execution
 and website integration are not implemented.
 
 There is currently no active pipeline-to-website data contract.
-`pipeline/export.py` retains the earlier PNG/manifest experiment, but its
+`pipeline/src/chlorosat/export.py` retains the earlier PNG/manifest experiment, but its
 output is not committed and the website has no reader for it. A future
 integration must be designed and approved before treating that format as a
 contract.
@@ -154,3 +154,6 @@ Not implemented:
 | Satellite/Map switch changes basemap layers, not geographic bounds | Active |
 | Future offline pipeline remains in the repo but disconnected | Approved; future work |
 | Pipeline output format and website integration | Open; requires team approval |
+| Landing page is the home page; map code loads only on `/map/` | Proposed; in place, team to discuss |
+| Every merge to `main` deploys automatically, with a deploy key locked to the site folder | Proposed; in place, team to discuss ([DEPLOYMENT.md](DEPLOYMENT.md)) |
+| Public repository; secrets only in the GitHub `production` environment; the server IP is treated as secret | Repo public at the professor's request; secrets rules in place, team to discuss ([AGENTS.md](../AGENTS.md#security--secrets)) |

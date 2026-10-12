@@ -93,7 +93,7 @@ npm run build                     # static build -> web/out/
 ```
 
 ## Conventions
-- Branches: `feature/<name>`, `bugfix/<name>`. PR into `main`, 1+ review, CI must pass (enforced by a ruleset on `main`: no direct pushes, no force pushes).
+- Branches: `feature/<name>`, `fix/<name>`, `docs/<name>`. PR into `main`, 1+ review, CI must pass (enforced by a ruleset on `main`: no direct pushes, no force pushes).
 - Commits: short and clear (`Add NDVI calculation`), not `added stuff`.
 - **Never commit raw satellite data** (`pipeline/data/`). No pipeline output is currently part of the website.
 - The site is a static export: pages are built once at build time. No API routes, and nothing that needs a running server (the VPS only serves files).

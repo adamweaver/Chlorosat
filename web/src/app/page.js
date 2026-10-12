@@ -11,7 +11,8 @@ const outfit = localFont({ src: "../fonts/outfit.woff2", weight: "100 900", disp
 /* [AI] Purpose: Home page (/): a light first page, so MapLibre and remote map tiles only
  *               load after someone opens the map.
  *      Does:    Name, animated satellite, and an "Open map" button that goes to /map/.
- *      Context: The page is server-rendered HTML/CSS; only the Stars canvas is client-side.
+ *      Context: Plain server-rendered HTML + CSS with no JavaScript of its own: Stars and
+ *               Satellite are server components (the shared Header is the only client part).
  *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · night-sky background like the globe's; Stars is
  *               now a small client component (canvas), the rest of the page is still plain HTML + CSS

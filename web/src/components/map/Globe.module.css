@@ -425,7 +425,7 @@
   color: #f2f3f5;
 }
 
-/* Recent searches (shown when the search box is empty - see SearchBar.jsx) */
+/* Recent searches (shown when the search box is empty - see SearchBar.js) */
 .searchRecentHeader {
   display: flex;
   align-items: center;
@@ -521,7 +521,7 @@
   }
 }
 
-/* ---------- Side control stack (filter / locate / zoom) ---------- */
+/* ---------- Side control stack (compass / recenter / locate / zoom) ---------- */
 .sideStack {
   position: absolute;
   z-index: 1000;
@@ -610,13 +610,9 @@
 }
 
 /* ---------- Legend ---------- */
-/* [AI] Purpose: matches the standalone chlorosat-globe's legend now that
- *      this app renders the same real globe engine - a continuous NDVI
- *      heat gradient, not the old discrete land-cover swatch list (that
- *      list was for the Leaflet 2D demo's different, discrete-class idea
- *      of a legend; the globe classifies vegetation as one continuous
- *      score, so a gradient bar is the accurate representation of what it
- *      actually renders).
+/* [AI] Purpose: a continuous NDVI heat gradient bar, not a list of class
+ *      swatches: the globe scores vegetation on one continuous scale, so a
+ *      gradient is the accurate picture of what it renders.
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David */
 .legendPanel {
   composes: panel;

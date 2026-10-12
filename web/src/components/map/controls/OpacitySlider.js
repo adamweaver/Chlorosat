@@ -5,9 +5,8 @@ import useHoverExpand from "./useHoverExpand";
 
 /* [AI] Purpose: Collapsible opacity control below the year slider.
  *      Context: added the eye icon (show/hide the vegetation layer
- *      entirely, independent of the opacity value) to match the standalone
- *      chlorosat-globe's ui.js, now that this app drives the same real
- *      globe engine and has an equivalent setVegVisible() to call.
+ *      entirely, independent of the opacity value) by calling the engine's
+ *      setVegVisible().
  *      Update: David asked for this to collapse/expand on hover the same
  *      way YearSelector does, instead of staying a permanently-full-width row
  *      that only opened the slider on click. The eye icon stays

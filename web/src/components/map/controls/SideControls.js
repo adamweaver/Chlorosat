@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import styles from "../Globe.module.css";
 
-/* [AI] Purpose: The recenter/locate/zoom button stack from the mockup.
- *      Context: no longer uses react-leaflet's useMap() - now driven
- *      through the `engine` prop (chlorosatGlobeEngine.js's API) since the
- *      map is the real MapLibre globe, not Leaflet.
+/* [AI] Purpose: The compass/recenter/locate/zoom button stack.
+ *      Context: driven through the `engine` prop (chlorosatGlobeEngine.js's API).
  *      Update: the old filter button was a placeholder with no filtering
  *      logic behind it. David pointed out that right-click-dragging the
  *      globe (MapLibre's default rotate/tilt gesture) can spin it into a

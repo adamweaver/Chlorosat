@@ -15,9 +15,9 @@ merge to main ─► GitHub Actions: npm ci + npm run build ─► rsync web/out
                                          manual fallback: deploy/deploy.sh (run by Adam)
 ```
 
-**Right now:** every merge to `main` deploys automatically. The home page (`/`) is the landing page with an **Open map** button; the map is at `/map/` (CS-038, D11). Watch a deploy in the repo's **Actions** tab → **Deploy**.
+**Right now:** every merge to `main` deploys automatically. The home page (`/`) is the landing page with an **Open map** button; the map is at `/map/` (CS-038). Watch a deploy in the repo's **Actions** tab → **Deploy**.
 
-## Status (updated 2026-09-24, #7)
+## Status (checked 2026-10-12)
 | Step | Status |
 |---|---|
 | Domain, DNS, HTTPS, www redirect | ✅ Done |
@@ -87,7 +87,7 @@ Ruleset `protect main` (Settings → Rules → Rulesets), no bypass list:
 Re-run the deploy workflow for an older commit, or check out the old commit and run `deploy/deploy.sh` (Adam).
 
 ## Security
-The repo is **public** (professor's request, D12). Anything committed (files, history, commit messages, PR text, Actions logs) is public and effectively permanent. Rules for agents are summarized in [AGENTS.md](../AGENTS.md#security--secrets).
+The repo is **public** (professor's request; see [ARCHITECTURE.md → Decisions](ARCHITECTURE.md#decisions)). Anything committed (files, history, commit messages, PR text, Actions logs) is public and effectively permanent. Rules for agents are summarized in [AGENTS.md](../AGENTS.md#security--secrets).
 
 **What's secret, and where it lives**
 | Secret | Lives only in |

@@ -320,8 +320,8 @@ button.glass {
 }
 
 /* ---------- Night sky (home page + behind the globe) ----------
-   [AI] A fixed star image tiled on black, made once by
-   scripts/make-stars.mjs. It used to be drawn at random in the browser on
+   [AI] A fixed star image (public/stars.svg) tiled on black. It was generated once by
+   scripts/make-stars.mjs, since removed (see git history to regenerate it). It used to be drawn at random in the browser on
    every load and resize, so the sky kept changing (on phones, opening the
    keyboard re-scattered it). The browser downloads it once and caches it.
    Written: 2026-09-30 · Claude Opus 5.5 · requested by David */

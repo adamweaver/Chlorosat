@@ -1,22 +1,20 @@
-// [AI] Purpose: The real 3D globe rendering engine, ported from the
-//      standalone chlorosat-globe prototype (globe.js) into this Next.js
-//      app so the map view here is "just like the already existing globe"
-//      - same live NASA GIBS NDVI fetching, per-pixel recoloring, ocean/
-//      lake water masking, and off-screen prefetching, not a mockup.
+// [AI] Purpose: The 3D globe rendering engine behind /map/: live NASA GIBS
+//      NDVI fetching, per-pixel recoloring, ocean/lake water masking,
+//      satellite and street basemaps, and off-screen prefetching.
 //      Does:    createChlorosatGlobe(opts) builds one MapLibre globe inside
 //      `opts.container` and returns a small imperative API (setYear,
-//      setOpacity, setVegVisible, switchBasemap, zoomIn/Out, flyTo, recenter,
-//      locate, destroy) for the React UI components (YearSelector, OpacitySlider,
-//      SearchBar, SideControls, BaseMapToggle) to drive - mirroring the
-//      window.ChlorosatGlobe API the standalone prototype exposes, just
-//      returned directly instead of hung on window (a React app should own
-//      its own instance, not share one global).
+//      setOpacity, setVegVisible, switchBasemap, zoomIn/Out, flyTo,
+//      flyToGlobe, fitToBounds, recenter, resetNorth, locate, destroy, plus
+//      the raw `map`) for the React components (MapApp and its controls).
+//      Returned directly rather than stored on `window`, so each React
+//      mount owns its own instance.
 //      Context: only ever imported by client-only components (MapApp.js,
 //      loaded via next/dynamic ssr:false) - maplibre-gl touches `window` at
 //      import time, so this module would break if it ever loaded during
 //      server rendering.
 //      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
 //      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/lib/chlorosatGlobeEngine.js
+//      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comments brought up to date with the code
 import * as maplibregl from 'maplibre-gl';
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
 import { REF_SOURCE_ID, REF_SOURCE, REF_EXTRA_SOURCE_ID, REF_EXTRA_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
@@ -96,7 +94,7 @@ function vegetationScore(r, g, b) {
 //      a different pattern and David saw the data "shift around and change
 //      itself" while zooming in. It also wasn't real data. Every zoom now
 //      shows NASA's actual values, smoothly enlarged, so they hold still.
-//      (The stage/noise code is kept; adding stages here would re-enable it.)
+//      (The stage/noise code is kept but inactive: octaves 0 and noiseAmt 0 below.)
 //      Written: 2026-09-28 · Claude Opus 5.5 · requested by David
 const DETAIL_STAGES = [
   { minZoom: NATIVE_MAX_ZOOM, octaves: 0, noiseAmt: 0 }
@@ -650,7 +648,7 @@ const ESRI_IMAGERY_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/W
 const ESRI_KEYED_IMAGERY_URL = 'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/';
 const ESRI_API_KEY = (process.env.NEXT_PUBLIC_ESRI_API_KEY || '').trim();
 
-// [AI] Satellite imagery by year (TEST - David is trying it out). Esri's
+// [AI] Satellite imagery by year. Esri's
 //      World Imagery Wayback archive keeps every published version of World
 //      Imagery since 2014, so the year slider can switch the satellite photo
 //      along with the vegetation layer: each year uses the Wayback release
@@ -703,8 +701,8 @@ const BASEMAPS = {
 // [AI] "Map" view drawn from OpenFreeMap's vector tiles instead of
 //      OpenStreetMap's pre-rendered image tiles. David wanted a map with no
 //      names or borders baked in: these layers are just shapes (land, forest,
-//      parks, towns, water, roads, buildings) in a dark style to match the
-//      app, and the names/borders on top are the same app-drawn label layers
+//      parks, towns, water, roads, buildings) styled by MAP_THEME below (the
+//      classic light look; the darker first version is kept too), and the names/borders on top are the same app-drawn label layers
 //      the satellite view uses (referenceLabels.js), so they behave the same
 //      in both views. Same tiles the labels and water mask already download,
 //      so no extra server - and no more reliance on tile.openstreetmap.org,
@@ -814,8 +812,7 @@ const MAP_LAYER_IDS = MAP_LAYERS.map((layer) => layer.id);
 const BASE_VEG_OPACITY_STOPS = [0, 1, 4, 0.85, 9, 0.4];
 // A ["zoom"] expression may only appear as the top-level input to
 // step/interpolate, never nested inside another expression like ["*", ...]
-// (that's what broke on the real MapLibre build, vs. whatever looser check
-// the standalone prototype's version happened to skip). So instead of
+// (MapLibre rejects the style otherwise). So instead of
 // multiplying a factor onto the interpolate expression at style-eval time,
 // bake the factor into the stop values themselves - this still produces a
 // live, per-zoom-interpolated opacity, it's just computed in JS whenever
@@ -893,14 +890,14 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
 
   // [AI] Removed the synthetic "vegFallback" layer. If NASA hadn't
   //      answered within 8 seconds, the app used to swap in made-up tiles
-  //      (public/fallback-tiles.json: a green band at the equator fading to
+  //      (the since-deleted public/fallback-tiles.json: a green band at the equator fading to
   //      tan at the poles) that looked like real vegetation data. David
   //      asked to drop it as a misrepresentation; if NASA is unreachable
   //      the vegetation layer now just stays empty.
   //      Written: 2026-09-28 · Claude Opus 5.5 · requested by David
 
-  // One NASA tile, decoded. Normally { kind: 'ndvi', idx, lut }: idx holds
-  // each pixel's legend number and lut[number] its NDVI (NaN = no data).
+  // One NASA tile, decoded. Normally { kind: 'ndvi', vals }: vals holds
+  // each pixel's NDVI (read via NASA's legend; NaN = no data), small gaps filled.
   // If NASA's legend or the PNG format isn't what's expected, it falls back
   // to { kind: 'bitmap', bitmap } for the old color-matching path.
   let rawBitmapCache = new Map();
@@ -1130,9 +1127,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // zoom level up from ours - using that same one (z - 1, up to their max of
   // 14) means the browser already has it cached from drawing the labels.
   // Returns a 256x256 Uint8Array (0 = land, 1 = water, 2 = wetland) aligned
-  // to the veg tile's
-  // pixels, or null if the tile can't be had (callers then fall back to
-  // NASA's land/water map).
+  // to the veg tile's pixels, or null if the tile can't be had (callers then
+  // fall back to NASA's land/water map).
   // Used at every zoom: NASA's land/water map (the fallback) only marks
   // oceans as water - big lakes like Victoria or Tanganyika are drawn as
   // land there, which painted them red when zoomed out.
@@ -1302,7 +1298,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     const sx = (x - x9 * factor) * subSize;
     const sy = (y - y9 * factor) * subSize;
 
-    // The water/no-data mask only ever exists at NATIVE_MAX_ZOOM
+    // (Color-matching fallback path.) The water/no-data mask only ever exists at NATIVE_MAX_ZOOM
     // resolution (~305m/pixel) - for ANY tile past that zoom, applying it
     // means cropping a handful of source pixels and stretching them
     // (nearest-neighbor) over a much bigger area than they can actually
@@ -1344,9 +1340,9 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   //      tile that does have imagery (up to 8 levels up). (Esri's
   //      ?blankTile=false option does the detection server-side, but its
   //      404s come back without CORS headers, flooding the browser console
-  //      with two red errors per missing tile.) Zoom stays unlimited
-  //      everywhere: full detail where Esri has
-  //      it, a softer enlarged view where it doesn't, never placeholders.
+  //      with two red errors per missing tile.) Zoom isn't limited by area
+  //      (only by the map's maxZoom): full detail where Esri has it, a
+  //      softer enlarged view where it doesn't, never placeholders.
   //      Parent lookups are cached, since every close-up tile under the
   //      same gap reuses the same parent.
   //      Written: 2026-09-28 · Claude Opus 5.5 · requested by David
@@ -1659,8 +1655,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     minZoom: Math.min(1.8, initialZoom - 0.3),
     // The Esri World Imagery basemap only guarantees real tiles worldwide
     // up to about this level - zoom in further almost anywhere and the
-    // tiles just come back empty. Capping here stops right before that
-    // happens instead of letting the view zoom into a blank tile.
+    // view would be almost all enlarged fill-in tiles (see the esrisat
+    // protocol). Capping here stops before that.
     maxZoom: 17,
     style: {
       version: 8,
@@ -1689,9 +1685,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
         // World_Boundaries_and_Places raster overlay, but its text is baked
         // into the tile images - David wanted states abbreviated when
         // zoomed out, so these are now vector labels drawn by MapLibre (see
-        // referenceLabels.js). Only relevant to the satellite basemap - OSM
-        // already draws its own borders/labels (in each country's own
-        // language - David asked to keep that).
+        // referenceLabels.js). Shown in both views (the Map view draws no
+        // names of its own); switchBasemap only recolors them.
         [REF_SOURCE_ID]: REF_SOURCE,
         // Hand-placed labels the tiles lack (e.g. Hawaii); see referenceLabels.js.
         [REF_EXTRA_SOURCE_ID]: REF_EXTRA_SOURCE
@@ -1727,8 +1722,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // toggle in this version - it was rendering as a permanently-open, full-
   // width bar. Rather than fight that, compact is off here and the whole
   // control is instead restyled in globals.css into a small, muted credit
-  // line tucked directly under the basemap toggle (Globe.module.css's
-  // .basemapStack), the way Google Maps keeps its own attribution.
+  // strip in the bottom-right corner, the way Google Maps keeps its own attribution.
   // [AI] Imagery credit that follows what's on screen, the way Google Maps
   //      rewrites "Imagery ©2025 ..." as you move (David's idea, replacing a
   //      "captured on" label at the center of the screen). After each pan/
@@ -2069,16 +2063,6 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       map.flyTo({ center: [lng, centerLat], zoom, bearing: 0, pitch: 0, duration: 1200 });
     },
 
-    // Flies back to the globe's starting view (same center/zoom the map is
-    // constructed with above) - the filter button (never wired to real
-    // filtering logic) was replaced with this, since "reset the view" is
-    // the more useful button to have in that slot. Also resets
-    // bearing/pitch to 0: right-click-dragging (MapLibre's default
-    // dragRotate) can spin/tilt the globe into a disorienting angle, and
-    // that's the main thing David wants this button to fix, not just pan.
-    // Also clears the "find my location" pin, if one is showing - a full
-    // reset-the-view action reasonably includes clearing that too, rather
-    // than leaving a stale pin from some earlier locate() sitting there.
     // [AI] Turn north back to the top and level any tilt, keeping the same
     //      place and zoom. Used by the compass button (SideControls.js).
     //      Written: 2026-10-07 · Claude Opus 5.5 · requested by David
@@ -2086,6 +2070,12 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       map.easeTo({ bearing: 0, pitch: 0, duration: 600 });
     },
 
+    // Flies back to the globe's starting view (same center/zoom the map is
+    // constructed with above) and resets bearing/pitch to 0, so a globe that
+    // was turned or tilted (two-finger twist, trackpad, Shift + arrow keys)
+    // is set straight again. Also clears "find my location", so no stale
+    // pin from an earlier locate() is left behind. (This button replaced
+    // an old placeholder filter button.)
     recenter() {
       // [AI] Clear "find my location" completely: the dot, the accuracy
       //      circle (it used to stay behind after an approximate fix - David,
@@ -2125,14 +2115,10 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       map.fitBounds(bounds, { padding, maxZoom: 16, duration: 1200 });
     },
 
-    // [AI] onError(message) gets a plain-English reason when location can't
-    //      be found. It used to fail silently (console only), so on a phone
-    //      opened over http://<PC's IP>:3000 - where browsers block location
-    //      outright and never show the permission prompt - the button just
-    //      looked broken.
-    //      Written: 2026-09-25 · Claude Opus 5.5 · requested by David
     // [AI] onMessage(text) gets a plain-English note: why location failed,
-    //      or that the position found is only approximate.
+    //      or that the position found is only approximate. (It used to fail
+    //      silently, so on a phone using the dev server over http://, where
+    //      browsers block location, the button just looked broken.)
     //      Written: 2026-09-25 · Claude Opus 5.5 · requested by David
     //      Edited:  2026-10-07 · Claude Opus 5.5 · requested by David · approximate locations
     locate(onMessage) {

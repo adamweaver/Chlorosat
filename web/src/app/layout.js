@@ -21,11 +21,13 @@ export const viewport = {
 };
 
 /* [AI] Purpose: Shared shell wrapped around every page.
- *      Does:    Renders <html>/<body>, the site header, then the current page.
- *      Context: Next.js App Router root layout. Layout details: CS-014.
+ *      Does:    Renders <html>/<body>, early connections to the map's tile servers, the site
+ *               header, the current page, and <PersistentMap /> (the globe, kept loaded once opened).
+ *      Context: Next.js App Router root layout.
  *      Written: 2026-09-22 · Claude Opus 5.5 · requested by Adam Weaver
  *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · globe map: preconnect to the tile servers;
- *               <PersistentMap /> keeps the globe loaded while visiting other pages */
+ *               <PersistentMap /> keeps the globe loaded while visiting other pages
+ *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · Does/Context brought up to date */
 export default function RootLayout({ children }) {
   return (
     <html lang="en">

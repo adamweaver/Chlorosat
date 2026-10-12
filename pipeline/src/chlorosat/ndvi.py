@@ -1,4 +1,4 @@
-"""Infrared method: NDVI math. Owner: CS-011 (Carter, S2).
+"""Infrared method: NDVI math. Written for CS-011 (Carter); not used by the live site.
 
 NDVI = (NIR - Red) / (NIR + Red), range -1..1.
 Plants reflect lots of near-infrared and absorb red, so healthy vegetation scores high.

@@ -18,12 +18,12 @@ import useHoverExpand from "./useHoverExpand";
  *      state up to MapApp so it can push the opacity panel (which sits
  *      right below this one) further down out of the way while this is
  *      expanded, rather than letting the two overlap.
- *      Edited: 2026-10-12 · GPT-5.6 Sol · requested by Lucas · remove obsolete manifest behavior.
  *      Update (mobile): open/close now comes from useHoverExpand, so it
  *      still opens on hover with a mouse but opens on tap (and closes on a
  *      tap elsewhere) on a phone, which has no hover.
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
- *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/YearSlider.jsx */
+ *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/YearSlider.jsx
+ *      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · remove obsolete manifest behavior. */
 /* [AI] inMenu: David asked for Year and opacity to live in a menu on phones
  *      (the three-bar button in the search bar, like Google Maps' phone
  *      layout). MapApp renders a second copy of this control inside that

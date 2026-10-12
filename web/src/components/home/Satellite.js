@@ -4,7 +4,7 @@ import styles from "./Home.module.css";
  *      Does:    Inline SVG: solar panels, body, a swaying leaf antenna, and three "signal" arcs
  *               that pulse one after another. The animations are plain CSS (Home.module.css),
  *               so no JavaScript runs.
- *      Context: Ported from the old web/landing/index.html (CS-038, D11). Same shapes and colors
+ *      Context: Ported from the old web/landing/index.html (CS-038; folder since removed). Same shapes and colors
  *               as branding/chlorosat-icon.svg. prefers-reduced-motion turns the animation off.
  *      Written: 2026-09-24 · Claude Opus 5.5 · requested by Adam Weaver */
 export default function Satellite() {

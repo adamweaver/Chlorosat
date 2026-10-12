@@ -1,7 +1,7 @@
 /* [AI] Purpose: Place search for the map's search box, run in the browser.
- *      The main site is a static export (docs/ARCHITECTURE.md, D1): no
- *      server, so no API routes. The demo's /api/geocode route moved here
- *      unchanged apart from running client-side.
+ *      The main site is a static export (docs/ARCHITECTURE.md): no
+ *      server, so no API routes. Started as the demo's /api/geocode route,
+ *      moved here to run in the browser (much extended since).
  *      Does:    searchPlaces(text) -> [{ id, label, lng, lat, bbox, zoom, view }],
  *      up to 5 places (bbox may be null - then fly to lng/lat at zoom; view
  *      'globe' means show the whole globe). Uses Photon (photon.komoot.io),
@@ -435,7 +435,8 @@ function rerank(nearby, plain, query, near) {
 /* [AI] Purpose: What SearchBar.js calls. Looks up `text` with Photon.
  *      Does:    text (+ optional near = { lng, lat, zoom } of the map view)
  *      -> Promise of up to 5 places (see the file header), best first
- *      (rerank above). Text under 3 characters returns [] without asking.
+ *      (rerank above). Text shorter than minSearchLength (3 characters, 2 in
+ *      non-Latin scripts) returns [] without asking.
  *      Throws if Photon can't be reached (SearchBar shows no results then).
  *      Nearby + famous: when zoomed in, it asks twice at the same time (no
  *      extra wait): once near the view and once without that bias, then

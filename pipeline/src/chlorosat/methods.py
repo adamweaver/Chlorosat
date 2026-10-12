@@ -1,6 +1,6 @@
 """Future-pipeline vegetation methods, bands, and draft color classes.
 
-We show vegetation two ways (decision D8). They measure different things, so results can differ:
+The pipeline plans two ways to detect vegetation. They measure different things, so results can differ:
     ndvi    - Infrared: healthy plants strongly reflect near-infrared (NIR) light. Math: ndvi.py
     visible - Visible light: finds green-looking areas in a normal color image. Math: visible.py
 
@@ -39,7 +39,7 @@ VISIBLE = {
     "description": "Green-looking areas in a normal color photo. Simpler, but easier to fool.",
     "bands": ["red", "green", "blue"],
     # PLACEHOLDER breakpoints for a VARI-style index (range about -1..1). The index and these
-    # values are decision D9, set in CS-026 (docs/research/visible-detection.md).
+    # values are part of the visible-light index choice (CS-026, docs/research/visible-detection.md).
     # No "water" class: visible-light indexes can't separate water reliably.
     "classes": [
         {"key": "bare", "min": -1.0, "max": 0.05, "color": "#8c510a", "label": "Bare ground / built up"},
@@ -54,8 +54,8 @@ VISIBLE = {
     ],
 }
 
-# Order = order shown in the website's method toggle.
+# Method order in the experimental manifest (the live site has no method toggle).
 METHODS = [NDVI, VISIBLE]
 
-# Shown first on the website. NDVI is the more reliable measure of plant health.
+# Default method in the experimental manifest. NDVI is the more reliable measure of plant health.
 DEFAULT_METHOD = "ndvi"

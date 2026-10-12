@@ -1,4 +1,7 @@
-"""Turn index arrays (any method) into map-ready images. Owner: CS-011 (Carter, S2)."""
+"""Turn index arrays (any method) into map-ready images.
+
+Written for CS-011 (Carter); not used by the live site.
+"""
 
 import math
 from pathlib import Path
@@ -77,7 +80,7 @@ def _hex_to_rgba(color: str) -> tuple[int, int, int, int]:
     return r, g, b, a
 
 
-# [AI] Purpose: Write the colored image the website overlays on the map, as small as possible.
+# [AI] Purpose: Write the colored overlay image, as small as possible.
 #      Does:    Saves `rgba` as an indexed (palette) PNG when it has <= 256 colors, else as RGBA.
 #      Context: CS-011. Budget: < 2 MB per PNG (docs/PRINCIPLES.md).
 #      Written: 2026-09-24 · Claude Fable 5.1 · requested by Carter

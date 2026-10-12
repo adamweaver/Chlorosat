@@ -39,9 +39,39 @@ The visible-light method (CS-026) lands in the second week.
 ## Definition of Done
 See [_template.md](_template.md#definition-of-done-applies-to-every-task).
 
+## Outcome (status 2026-10-12; sprint review Oct 14)
+✅ done · ◐ partly done · ○ not started. The team switched from this Leaflet/PNG plan to the
+NASA-fed globe in #9 (Oct 6), so much of the work landed outside the planned tasks.
+Current status of every task: [BACKLOG.md](../BACKLOG.md).
+
+**Planned tasks**
+
+| ID | Owner | Result | PR |
+|---|---|---|---|
+| CS-020 | David | ○ Not started; David built the globe instead (CS-050). Now future-pipeline work | |
+| CS-021 | Lucas | ○ Not started. Now future-pipeline work | |
+| CS-022 | Kevin | ○ Open | |
+| CS-023 | Adam | ◐ About page done (David #9, Lucas #14). Year comparison and usability test not started | #9, #14 |
+| CS-024 | Adam | ✅ Done early in Sprint 2 | #7 |
+| CS-026 | Carter | ◐ Research done (VARI proposed); implementation not started | #6 |
+| CS-027 | Adam | ✅ Done. Checked 2026-10-12: build files carry long-term cache headers and merges deploy automatically (`/data/manifest.json` no longer exists) | #5, #7 |
+
+**Unplanned work done this sprint**
+
+| ID | Owner | Result | PR |
+|---|---|---|---|
+| CS-050 | David | ✅ Worldwide MapLibre globe with NASA MODIS NDVI, Esri satellite + Wayback by year, street map, place search, phone layout, About page. Also delivered CS-025, CS-030, CS-035, CS-048 | #9 |
+| CS-051 | David | ✅ Place names on the live site (MapLibre worker served as `.js`) | #10 |
+| CS-052 | David | ✅ Map fixes: country/state names, search framing, approximate vs. precise location | #11, #12, #13 |
+| CS-053 | Lucas | ✅ Docs + UML match the globe; Leaflet-era code removed; `web/src` reorganized | #14 |
+| CS-054 | Adam | ✅ README for the review checklist, screenshots, code comments, backlog + sprint status | #15 |
+
+**Week 7 milestone:** met on Oct 6 through the globe (#9) rather than CS-020/CS-022 as planned.
+**v0.1 goal:** not met: visible light, year comparison and statistics are not implemented. To decide at the review.
+
 ## Review
 - Demoed:
-- Not finished (→ carried over):
+- Not finished (→ carried over): CS-020, CS-021, CS-022, CS-023 (comparison, usability test), CS-026 (implementation)
 - Scope decisions for v1.0:
 
 ## Retrospective
