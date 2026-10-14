@@ -18,6 +18,7 @@
 import * as maplibregl from 'maplibre-gl';
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
 import { REF_SOURCE_ID, REF_SOURCE, REF_EXTRA_SOURCE_ID, REF_EXTRA_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
+import { plotGivenYear } from './plotGivenYear';
 
 // [AI] The .js copy, not the .mjs original: some servers (including ours at
 //      first deploy) send .mjs as a download type, and browsers then refuse to
@@ -1996,8 +1997,13 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   return {
     map,
 
+    // [AI] Ignores years with no NASA layer (plotGivenYear returns null)
+    //      instead of building a date with no tiles. David, 2026-10-12.
     setYear(year) {
-      NDVI_DATE = year + '-08-13';
+      const date = plotGivenYear(year);
+      if (!date) return;
+      year = date.slice(0, 4);
+      NDVI_DATE = date;
       clearDateDependentCaches();
       if (USE_WAYBACK_BY_YEAR && satYear !== year) {
         satYear = year;

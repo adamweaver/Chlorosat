@@ -24,7 +24,8 @@ const CACHE_LIMIT = 200;
 const cache = new Map();
 
 // "Norman, Oklahoma, United States" - skips missing and repeated parts.
-function buildLabel(p) {
+// Exported for tests/buildLabel.test.mjs (David, 2026-10-13).
+export function buildLabel(p) {
   const street = p.street ? [p.housenumber, p.street].filter(Boolean).join(' ') : null;
   const parts = [];
   for (const part of [p.name, street, p.city, p.state, p.country]) {
