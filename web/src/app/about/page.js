@@ -12,7 +12,8 @@ export const metadata = { title: "About · Chlorosat" };
  *      Edited:  2026-09-30 · Claude Opus 5.5 (for David) · replaced placeholder with the demo's About text
  *      Edited:  2026-10-07 · Claude Opus 5.5 (for David) · rewritten to match the current globe: no-data areas,
  *               compass, approximate location, smarter search, privacy, limits
- *      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · state current feature limits */
+ *      Edited:  2026-10-12 · GPT-5.6 Sol · requested by Lucas · state current feature limits
+ *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by David · the "Aquatic" switch (test copy) */
 export default function About() {
   return (
     <main className={`${styles.aboutPage} dark-scrollbar`}>
@@ -45,6 +46,30 @@ export default function About() {
             dense city centers. Midtown and Lower Manhattan are a permanent gap
             in NASA&apos;s data, for example. On a few very small islands this
             can make a green island look red.
+          </p>
+          <p>
+            In marshes, swamps and tidal flats, low readings fade out instead
+            of turning red. There they usually mean standing water mixed in
+            with the plants, not bare ground.
+          </p>
+          <p>
+            Turn on <strong>Aquatic</strong> at the bottom of the legend to
+            see algae in oceans and large lakes. It uses a different
+            measurement: chlorophyll, the green pigment in algae, seen from
+            space. <strong>Deep indigo</strong> is clear water with little
+            algae; the brighter the color, the more algae, through violet and
+            magenta up to <strong>pale pink</strong> for a bloom (Lake Erie in
+            late summer, for example). It shows tiny floating algae, not larger water plants
+            like seagrass or water lilies, which are too small to see at this
+            detail. Small, muddy or near-shore water often has no reading.
+          </p>
+          <p>
+            Clouds hide some seas for weeks, like the Gulf of Guinea or the
+            Arabian Sea during the monsoon, and polar oceans are dark for part
+            of the year. Where the chosen weeks have no reading, the gap is
+            filled from the months around them and drawn{' '}
+            <strong>faded</strong>, so you can tell it apart. Ocean covered by
+            sea ice stays empty.
           </p>
 
           <h2>Using the map</h2>
@@ -133,6 +158,12 @@ export default function About() {
               <strong>Vegetation (NDVI):</strong> NASA&apos;s MODIS sensor on
               the Terra satellite, through NASA GIBS. Each year shows the
               mid-August 16-day average.
+            </li>
+            <li>
+              <strong>Algae in water (Aquatic):</strong> chlorophyll from the
+              VIIRS sensor on NASA/NOAA&apos;s NOAA-20 satellite, through NASA
+              GIBS. Daily views from the same mid-August weeks are combined to
+              see past clouds. About 1 km detail.
             </li>
             <li>
               <strong>Satellite photos:</strong> Esri World Imagery (Maxar,

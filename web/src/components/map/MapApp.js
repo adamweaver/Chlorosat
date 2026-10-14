@@ -5,11 +5,10 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { createChlorosatGlobe } from "@/lib/map/chlorosatGlobeEngine";
 
 import YearSelector from "./controls/YearSelector";
-import OpacitySlider from "./controls/OpacitySlider";
 import SearchBar from "./controls/SearchBar";
 import SideControls from "./controls/SideControls";
 import Legend from "./controls/Legend";
-import BaseMapToggle from "./controls/BaseMapToggle";
+import LayersControl from "./controls/LayersControl";
 import styles from "./Globe.module.css";
 
 /* [AI] Purpose: The map page's app: the MapLibre globe plus the controls that drive it.
@@ -37,15 +36,10 @@ export default function MapApp() {
   const [year, setYear] = useState('2026');
   const [opacity, setOpacity] = useState(1.0);
   const [vegVisible, setVegVisible] = useState(true);
+  const [aquaVisible, setAquaVisible] = useState(false);
+  const [aquaOpacity, setAquaOpacity] = useState(1.0);
   const [basemap, setBasemap] = useState('satellite');
-  // Whether the year panel is popped open (hover) - pushes OpacitySlider,
-  // which sits right below it, further down so the two don't overlap.
-  const [yearHovered, setYearHovered] = useState(false);
-  // Whether the basemap toggle is popped open (hover) - pushes SideControls'
-  // button stack, which David moved to sit right above it, further up so
-  // the two don't overlap.
-  const [basemapHovered, setBasemapHovered] = useState(false);
-  // [AI] Phone-only Year + opacity menu (the three-bar button in the search
+  // [AI] Phone-only Year menu (the three-bar button in the search
   //      bar). A tap anywhere outside the menu or its button closes it.
   //      Written: 2026-09-29 · Claude Opus 5.5 · requested by David
   const [menuOpen, setMenuOpen] = useState(false);
@@ -76,6 +70,25 @@ export default function MapApp() {
     const next = !vegVisible;
     setVegVisible(next);
     engine && engine.setVegVisible(next);
+  }
+
+  // [AI] The Layers panel's "Algae in water" switch (off by default) and its
+  //      own opacity (the plants layer's slider no longer dims it too).
+  //      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+  function toggleAquaVisible() {
+    const next = !aquaVisible;
+    setAquaVisible(next);
+    engine && engine.setAquaVisible(next);
+  }
+
+  function changeAquaOpacity(v) {
+    setAquaOpacity(v);
+    engine && engine.setAquaOpacity(v);
+  }
+
+  function changeBasemap(mode) {
+    setBasemap(mode);
+    engine && engine.switchBasemap(mode);
   }
 
 
@@ -134,14 +147,6 @@ export default function MapApp() {
         year={year}
         availableYears={YEARS}
         onChange={changeYear}
-        onHoverChange={setYearHovered}
-      />
-      <OpacitySlider
-        opacity={opacity}
-        onChange={changeOpacity}
-        visible={vegVisible}
-        onToggleVisible={toggleVegVisible}
-        pushedDown={yearHovered}
       />
       <SearchBar
         engine={engine}
@@ -152,25 +157,23 @@ export default function MapApp() {
       {menuOpen && (
         <div ref={menuRef} className={styles.mapMenu}>
           <YearSelector years={YEARS} year={year} availableYears={YEARS} onChange={changeYear} inMenu />
-          <div className={styles.mapMenuDivider} />
-          <OpacitySlider
-            opacity={opacity}
-            onChange={changeOpacity}
-            visible={vegVisible}
-            onToggleVisible={toggleVegVisible}
-            inMenu
-          />
         </div>
       )}
-      <SideControls engine={engine} pushedUp={basemapHovered} />
-      <Legend />
-      <BaseMapToggle
+      <SideControls engine={engine} />
+      <Legend vegVisible={vegVisible} aquaVisible={aquaVisible} />
+      {/* [AI] Base map, both data layers and their opacity, all in one
+           panel (LayersControl.js). Written: 2026-10-12 · Claude Opus 5.5 · requested by David */}
+      <LayersControl
         basemap={basemap}
-        onChange={(mode) => {
-          setBasemap(mode);
-          engine && engine.switchBasemap(mode);
-        }}
-        onHoverChange={setBasemapHovered}
+        onBasemap={changeBasemap}
+        vegVisible={vegVisible}
+        onToggleVeg={toggleVegVisible}
+        vegOpacity={opacity}
+        onVegOpacity={changeOpacity}
+        aquaVisible={aquaVisible}
+        onToggleAqua={toggleAquaVisible}
+        aquaOpacity={aquaOpacity}
+        onAquaOpacity={changeAquaOpacity}
       />
     </>
   );

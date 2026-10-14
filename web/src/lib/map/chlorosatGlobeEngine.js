@@ -16,7 +16,7 @@
 //      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/lib/chlorosatGlobeEngine.js
 //      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comments brought up to date with the code
 import * as maplibregl from 'maplibre-gl';
-import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
+import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN, AQUA_STOPS, AQUA_MIN_MG, AQUA_MAX_MG } from './heatColors';
 import { REF_SOURCE_ID, REF_SOURCE, REF_EXTRA_SOURCE_ID, REF_EXTRA_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
 
 // [AI] The .js copy, not the .mjs original: some servers (including ours at
@@ -344,6 +344,178 @@ function getNdviColormap() {
       });
   }
   return ndviColormapPromise;
+}
+
+/* [AI] Purpose: Data for the aquatic layer (the "Aquatic" switch): algae
+ *      in oceans and large lakes, which the land layer can't show.
+ *      Does:    Turns NASA's chlorophyll-a legend into a lookup from each
+ *               tile color to a position on the aquatic color ramp
+ *               (AQUA_STOPS in heatColors.js), on a log scale from
+ *               AQUA_MIN_MG to AQUA_MAX_MG.
+ *      Context: NASA's MODIS NDVI (the land layer) has no readings over
+ *               most water: checked 2026-10-12, Lake Erie, Lake Superior
+ *               and Lake Taihu were all "no data". Ocean-color satellites
+ *               measure chlorophyll-a instead, the green pigment in algae,
+ *               in mg per cubic meter, from the VIIRS sensor on two
+ *               satellites (NOAA-20 and Suomi NPP), which together cover
+ *               every year on the slider. Each is daily and ~1 km (GIBS
+ *               zoom 7) with cloud gaps, so getAquaSource combines all 16
+ *               days of the NDVI's window from both (see AQUA_SOURCES).
+ *               Limits: this is microscopic algae
+ *               (phytoplankton), not rooted or floating plants like
+ *               seagrass or water hyacinth (too small to see at 1 km), and
+ *               small, muddy or near-shore water usually has no reading.
+ *      Written: 2026-10-12 · Claude Opus 5.5 · requested by David */
+// [AI] Patchy spots fix. The first version used 8 days from one satellite;
+//      after dropping one-day readings (AQUA_MIN_CLEAR_DAYS) that kept only
+//      61-90% of the water the satellites can see in that window, so cloudy
+//      areas (the Gulf of Mexico, the North Sea) were full of holes. Every
+//      day from both satellites keeps 96-99% (measured on 5 regions,
+//      2026-10-12). It's 32 small images per tile, but NASA sends them
+//      quickly (256 in ~1 s in testing), and enlarged tiles past zoom 7
+//      reuse them.
+//      Edited: 2026-10-12 · Claude Opus 5.5 · requested by David
+// [AI] Sentinel-3A and 3B (ESA's ocean-color satellites, served by NASA
+//      in the same format and color scale) were added for more coverage:
+//      e.g. the Gulf of Guinea went from 20% to 45% of its water, the North
+//      Sea from 93% to 98% (measured 2026-10-12). Their readings agree with
+//      the VIIRS pair to within ~10-25%, about 2% of the color bar.
+//      Edited: 2026-10-12 · Claude Opus 5.5 · requested by David
+const AQUA_SOURCES = [
+  'VIIRS_NOAA20_Chlorophyll_a', 'VIIRS_SNPP_L2_Chlorophyll_A',
+  'S3A_OLCI_Chlorophyll_a', 'S3B_OLCI_Chlorophyll_a',
+];
+const AQUA_NATIVE_MAX_ZOOM = 7;   // GIBS serves these layers up to zoom 7 (~1 km pixels)
+const AQUA_DAYS = 16;             // the NDVI date and the 15 days after it
+// Small holes left after combining (a pixel or two near a shore, a cloud
+// that sat still) are filled from the readings around them, up to this many
+// pixels (~1.2 km each) from real data. Bigger holes stay empty.
+const AQUA_GAP_FILL_PASSES = 3;
+// [AI] Filling the big holes. Some water has no reading in the two-week
+//      window at all: the Gulf of Guinea and the Angola coast (clouds most
+//      of the year), the Arabian Sea in August (monsoon), and the oceans
+//      near the poles in their dark season. David asked for those to be
+//      filled as well as possible, so each still-empty pixel falls back,
+//      in order, to:
+//        1. the season around the window (AQUA_SEASON_OFFSETS: 45 days
+//           either side), then
+//        2. the year around it (AQUA_YEAR_OFFSETS: one day a month).
+//      Filled pixels are drawn more see-through (AQUA_TIER_ALPHA) and the
+//      legend says so, so they never pass for readings from the chosen
+//      weeks. Measured 2026-10-12 on August 2025: Gulf of Guinea 20% -> 62%
+//      of its water with the season alone, Angola coast 53% -> 90%, Arabian
+//      Sea 76% -> 94%. The fallbacks are read at a lower zoom
+//      (AQUA_FALLBACK_ZOOM_DROP levels out, so one download serves 16
+//      tiles) because they're only a rough stand-in. Sea ice and polar
+//      night still leave the ice-covered polar ocean empty: there's
+//      nothing to measure there.
+//      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+const AQUA_SEASON_OFFSETS = [];
+for (let d = -45; d <= 60; d += 6) AQUA_SEASON_OFFSETS.push(d);
+const AQUA_YEAR_OFFSETS = [];
+for (let d = -165; d <= 180; d += 30) AQUA_YEAR_OFFSETS.push(d);
+const AQUA_FALLBACK_ZOOM_DROP = 2;
+// [AI] Speed (David found tiles slow, 2026-10-13). Measured: turning the
+//      layer on at the globe view started 5,077 NASA downloads in 10 s
+//      (8,416 soon after) - 108 tiles x 64 images, plus the fallbacks - and
+//      the land layer's tiles had to queue behind them. Changes:
+//      - aquaDetailDrop: each tile is made from the NASA tile 1 zoom level
+//        further out, or 2 while zoomed out to the whole globe or a
+//        continent (zoom 5 or less), so 4-16x fewer tiles to fetch. There a
+//        reading still covers only a few screen pixels; past zoom 8
+//        nothing changes. (The globe view went from 108 tiles to ~10.)
+//      - Fallbacks use 2 satellites (AQUA_FALLBACK_SOURCES) and every 6th
+//        day of the season instead of 4 and every 3rd: 36 + 24 images
+//        instead of 144 + 48. They're only a faded stand-in.
+//      - Dates that haven't happened yet aren't requested.
+//      - At most AQUA_MAX_IN_FLIGHT downloads at once, and none start
+//        while land tiles are loading (aquaFetch), so the land layer
+//        always comes first.
+//      - Finished tiles for past years are saved in the browser
+//        (AQUA_RESULT_CACHE), so coming back costs no downloads at all.
+//      Written: 2026-10-13 · Claude Opus 5.5 · requested by David
+function aquaDetailDrop(z) {
+  return z <= 5 ? 2 : 1;
+}
+const AQUA_FALLBACK_SOURCES = ['VIIRS_NOAA20_Chlorophyll_a', 'S3A_OLCI_Chlorophyll_a'];
+const AQUA_MAX_IN_FLIGHT = 24;
+const AQUA_RESULT_CACHE = 'chlorosat-aqua-v1';
+// Opacity for: the chosen weeks, the season, the year.
+const AQUA_TIER_ALPHA = [1, 0.7, 0.5];
+// A pixel needs a reading on at least this many of those days. NASA's daily
+// tiles sometimes carry a single bad row of values straight across land and
+// sea (seen 2026-10-12 as thin horizontal stripes over Canada and Russia);
+// a value seen on only one day is dropped, which removes them.
+const AQUA_MIN_CLEAR_DAYS = 2;
+// [AI] Glow (David asked for "a slight glowing effect", 2026-10-12). A second
+//      layer, drawn over the algae layer, holds only the algae-rich water
+//      (ramp position above AQUA_GLOW_FROM) in a brighter shade, blurred by
+//      drawing it from coarser tiles (the aquaGlow source). Blooms get a
+//      soft halo; clear water is unchanged.
+//      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+const AQUA_GLOW_FROM = 0.45;
+// Glow strength, times the algae layer's own opacity. Weaker in the Map
+// view: a light glow over a light map reads as haze, not glow.
+const AQUA_GLOW_OPACITY = { satellite: 0.6, map: 0.35 };
+// Map-view water color while the aquatic layer is on (see setAquaVisible).
+const AQUA_MAP_WATER = '#b3babf';
+const AQUA_COLORMAP_URL = 'https://gibs.earthdata.nasa.gov/colormaps/v1.3/VIIRS_Chlorophyll.xml';
+const AQUA_LOG_MIN = Math.log10(AQUA_MIN_MG);
+const AQUA_LOG_SPAN = Math.log10(AQUA_MAX_MG) - AQUA_LOG_MIN;
+
+// Ramp position (0-255) -> r, g, b, built once from AQUA_STOPS.
+const AQUA_LUT = new Uint8ClampedArray(256 * 3);
+(function buildAquaLut() {
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255;
+    let k = 0;
+    while (k < AQUA_STOPS.length - 2 && t > AQUA_STOPS[k + 1][0]) k++;
+    const [t0, c0] = AQUA_STOPS[k];
+    const [t1, c1] = AQUA_STOPS[k + 1];
+    const f = Math.min(1, Math.max(0, (t - t0) / (t1 - t0)));
+    for (let ch = 0; ch < 3; ch++) AQUA_LUT[i * 3 + ch] = c0[ch] + (c1[ch] - c0[ch]) * f;
+  }
+})();
+
+// Legend XML -> Map("r,g,b" -> ramp position 0-1, or NaN for "no data").
+// Entries look like value="[0.346,0.357)", "(-INF,0.0100)" or
+// "[20.000,+INF)"; each counts as the middle of its range (geometric
+// middle, since the scale is logarithmic).
+function parseChlorophyllColormap(xml) {
+  const legend = new Map();
+  for (const m of xml.matchAll(/<ColorMapEntry\b([^>]*)>/g)) {
+    const attrs = m[1];
+    const rgb = (attrs.match(/\brgb="([^"]+)"/) || [])[1];
+    if (!rgb) continue;
+    const key = rgb.replace(/\s+/g, '');
+    if (/\bnodata="true"/.test(attrs)) {
+      legend.set(key, NaN);
+      continue;
+    }
+    const range = attrs.match(/\bvalue="[[(]([^,]+),([^\])]+)[\])]"/);
+    if (!range) continue;
+    let lo = parseFloat(range[1]), hi = parseFloat(range[2]);
+    if (!Number.isFinite(lo)) lo = hi;
+    if (!Number.isFinite(hi)) hi = lo;
+    if (!(lo > 0 && hi > 0)) continue;
+    const t = (Math.log10(Math.sqrt(lo * hi)) - AQUA_LOG_MIN) / AQUA_LOG_SPAN;
+    legend.set(key, Math.min(1, Math.max(0, t)));
+  }
+  return legend.size > 10 ? legend : null;
+}
+
+let chlorophyllColormapPromise = null;
+function getChlorophyllColormap() {
+  if (!chlorophyllColormapPromise) {
+    chlorophyllColormapPromise = fetch(AQUA_COLORMAP_URL)
+      .then((res) => (res.ok ? res.text() : Promise.reject(new Error('HTTP ' + res.status))))
+      .then(parseChlorophyllColormap)
+      .catch(() => {
+        chlorophyllColormapPromise = null; // try again on the next tile
+        return null;
+      });
+  }
+  return chlorophyllColormapPromise;
 }
 
 // Minimal PNG reader for 8-bit, non-interlaced, indexed-color images (what
@@ -1001,9 +1173,10 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
         // vegetation. In mapped wetlands (marsh, swamp, tidal flats) a
         // reading at or below zero, or none at all, almost always means
         // standing water, so those aren't called "no vegetation" either.
-        if (!(nearest > 0) && !solid) continue;
-        if (nearest > 0 && maskAll && water) continue;
+        // Water: never drawn where the mask is trusted (maskAll).
+        if (maskAll && water) continue;
         let t;
+        let alpha = 255;
         {
           // [AI] Blend the four nearest NASA pixels. On solid land, a
           //      neighbor with NDVI <= 0 or no data counts as 0 ("no
@@ -1020,7 +1193,32 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           if (c10 > 0) { sum += c10 * w10; wsum += w10; } else if (solid) wsum += w10;
           if (c01 > 0) { sum += c01 * w01; wsum += w01; } else if (solid) wsum += w01;
           if (c11 > 0) { sum += c11 * w11; wsum += w11; } else if (solid) wsum += w11;
+          // [AI] Marshes and other ground that isn't solid land (wetlands,
+          //      islets, shore edges). David found marshes south of Houma,
+          //      Louisiana full of see-through squares and flat red patches
+          //      (2026-10-12). Two causes, two fixes:
+          //      - Squares: a pixel used to be dropped whenever its nearest
+          //        NASA reading was <= 0 or missing, so holes had hard 250 m
+          //        steps. Now it's drawn wherever any of the 4 neighbors has
+          //        a reading, fading out with how much of the blend had one
+          //        (wsum), so holes get soft, rounded edges.
+          //      - Red: in a mapped wetland a low reading almost always means
+          //        standing water mixed into the pixel, not bare ground, so
+          //        low readings there fade out (fully see-through at NDVI
+          //        0.05, solid from 0.35) instead of being painted "no
+          //        vegetation" red. Healthy marsh (higher readings) is drawn
+          //        as before.
+          //      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+          if (!solid) {
+            if (wsum <= 0) continue;
+            alpha *= Math.min(1, wsum * 2);
+          }
           t = wsum > 0 ? sum / wsum : 0;
+          if (wetland) {
+            const fade = Math.min(1, Math.max(0, (t - 0.05) / 0.3));
+            if (fade <= 0) continue;
+            alpha *= fade;
+          }
           if (hasNoise) {
             const gxF = px / NOISE_GRID_STEP;
             const gx0 = gxF | 0;
@@ -1033,7 +1231,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           t = t < 0 ? 0 : t > 1 ? 1 : t;
         }
         const li = ((t * (HEAT_LUT_SIZE - 1)) | 0) * 3;
-        d[i] = HEAT_LUT[li]; d[i + 1] = HEAT_LUT[li + 1]; d[i + 2] = HEAT_LUT[li + 2]; d[i + 3] = 255;
+        d[i] = HEAT_LUT[li]; d[i + 1] = HEAT_LUT[li + 1]; d[i + 2] = HEAT_LUT[li + 2]; d[i + 3] = Math.round(alpha);
       }
     }
     return out;
@@ -1213,6 +1411,310 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     return mask;
   }
 
+  /* [AI] Purpose: Build the aquatic layer's tiles (see AQUA_SOURCES).
+   *      Does:    getAquaSource: for one GIBS tile (zoom <= 7), downloads
+   *               AQUA_DAYS days from each of AQUA_SOURCES, reads each
+   *               pixel through NASA's legend,
+   *               and keeps the median of the clear days (the median ignores
+   *               one odd day, like a cloud edge read as a bloom). Pixels
+   *               clear on fewer than AQUA_MIN_CLEAR_DAYS days stay empty.
+   *               renderAquaTile: paints a 256 px tile, enlarging part of a
+   *               zoom-7 tile when zoomed in further, and trims it to the
+   *               water outlines from the vector map tiles (the same mask
+   *               the land layer uses), so it never covers land.
+   *               Nearly solid (80-100%): the satellite photo's own blue
+   *               water and bright shallow banks (the Bahamas) looked just
+   *               like the data when it was more see-through, so you
+   *               couldn't tell which was which (checked 2026-10-12).
+   *      Written: 2026-10-12 · Claude Opus 5.5 · requested by David */
+  function aquaUrl(layer, z, x, y, date) {
+    return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layer +
+      '/default/' + date + '/GoogleMapsCompatible_Level7/' + z + '/' + y + '/' + wrapX(x, z) + '.png';
+  }
+  // Dates as day offsets from the NDVI date (the start of the window).
+  function aquaDatesFrom(offsets) {
+    const start = new Date(NDVI_DATE + 'T00:00:00Z').getTime();
+    return offsets.map((d) => new Date(start + d * 86400000).toISOString().slice(0, 10));
+  }
+  const AQUA_WINDOW_OFFSETS = Array.from({ length: AQUA_DAYS }, (_, i) => i);
+
+  // A small download queue for the algae layer (see aquaDetailDrop):
+  // at most AQUA_MAX_IN_FLIGHT at once, and new ones wait while land tiles
+  // are loading (pendingTiles), checking again every 100 ms.
+  let aquaInFlight = 0;
+  const aquaWaiting = [];
+  function aquaPump() {
+    while (aquaInFlight < AQUA_MAX_IN_FLIGHT && aquaWaiting.length && pendingTiles === 0) {
+      aquaInFlight++;
+      aquaWaiting.shift()();
+    }
+    if (aquaWaiting.length && pendingTiles > 0) setTimeout(aquaPump, 100);
+  }
+  function aquaFetch(url) {
+    return new Promise((resolve) => { aquaWaiting.push(resolve); aquaPump(); })
+      .then(() => fetchWithRetry(url, 1, 350))
+      .finally(() => { aquaInFlight--; aquaPump(); });
+  }
+
+  // Finished tiles saved in the browser (Cache Storage), for years whose
+  // data is complete (the year fallback reaches ~6 months past the date).
+  // Stored compactly: one byte per pixel for the value (255 = no data) and
+  // one for where it came from (tier).
+  function aquaResultKey(z, x, y) {
+    return 'https://chlorosat.local/aqua/' + NDVI_DATE + '/' + z + '/' + x + '/' + y;
+  }
+  function aquaYearIsComplete() {
+    return Date.now() - new Date(NDVI_DATE + 'T00:00:00Z').getTime() > 200 * 86400000;
+  }
+  async function loadAquaResult(z, x, y) {
+    if (typeof caches === 'undefined' || !aquaYearIsComplete()) return undefined;
+    try {
+      const cache = await caches.open(AQUA_RESULT_CACHE);
+      const hit = await cache.match(aquaResultKey(z, x, y));
+      if (!hit) return undefined;
+      const bytes = new Uint8Array(await hit.arrayBuffer());
+      if (bytes.length === 1) return null; // saved "no water readings"
+      const vals = new Float32Array(256 * 256);
+      for (let i = 0; i < vals.length; i++) vals[i] = bytes[i] === 255 ? NaN : bytes[i] / 254;
+      return { vals, tier: bytes.slice(256 * 256) };
+    } catch (err) {
+      return undefined;
+    }
+  }
+  let aquaResultSaves = 0;
+  async function saveAquaResult(z, x, y, src) {
+    if (typeof caches === 'undefined' || !aquaYearIsComplete()) return;
+    try {
+      let bytes;
+      if (!src) {
+        bytes = new Uint8Array(1);
+      } else {
+        bytes = new Uint8Array(2 * 256 * 256);
+        for (let i = 0; i < 256 * 256; i++) {
+          const v = src.vals[i];
+          bytes[i] = Number.isNaN(v) ? 255 : Math.round(Math.min(1, Math.max(0, v)) * 254);
+        }
+        bytes.set(src.tier, 256 * 256);
+      }
+      const cache = await caches.open(AQUA_RESULT_CACHE);
+      await cache.put(aquaResultKey(z, x, y), new Response(bytes));
+      // Keep it to ~400 tiles (~50 MB): every 50 saves, drop the oldest.
+      if (++aquaResultSaves % 50 === 0) {
+        const keys = await cache.keys();
+        for (const req of keys.slice(0, Math.max(0, keys.length - 400))) await cache.delete(req);
+      }
+    } catch (err) {
+      // Not fatal: the tile is just rebuilt next time.
+    }
+  }
+
+  // Downloads one GIBS tile for each of AQUA_SOURCES on each date and keeps
+  // each pixel's median over the clear readings. Returns Float32Array(256*256)
+  // of ramp positions (NaN = no data). Throws if every download failed.
+  async function combineAquaDays(z, x, y, dates, sources = AQUA_SOURCES) {
+    const legend = await getChlorophyllColormap();
+    if (!legend) throw new Error('chlorophyll legend unavailable');
+    // Skip days that haven't happened yet (NASA has nothing for them).
+    const today = new Date().toISOString().slice(0, 10);
+    const views = [];
+    for (const layer of sources) for (const date of dates) if (date < today) views.push(aquaUrl(layer, z, x, y, date));
+    if (!views.length) return new Float32Array(256 * 256).fill(NaN);
+    // Plain downloads, not fetchNasaTile's Cache Storage: dozens of images
+    // per tile would quickly push the land layer's saved tiles out of it.
+    // A date with no data yet (in the future) just fails and is skipped.
+    const days = await Promise.all(views.map((url) =>
+      aquaFetch(url)
+        .then((res) => res.arrayBuffer())
+        .then((buffer) => decodeIndexedPng(buffer).catch(() => null))
+        .catch(() => 'failed')));
+    if (days.every((day) => day === 'failed')) throw new Error('chlorophyll tiles unavailable');
+    // An empty day comes back as a plain see-through PNG, not an indexed
+    // one, so decodeIndexedPng returns null for it; it's just skipped.
+    const usable = [];
+    for (const png of days) {
+      if (!png || png === 'failed' || png.width !== 256 || png.height !== 256) continue;
+      const lut = new Float32Array(256).fill(NaN);
+      png.palette.forEach((rgb, i) => {
+        const value = legend.get(rgb);
+        if (value !== undefined) lut[i] = value;
+      });
+      usable.push({ lut, idx: png.idx });
+    }
+    const vals = new Float32Array(256 * 256).fill(NaN);
+    const clear = new Float32Array(Math.max(1, usable.length));
+    for (let i = 0; i < vals.length; i++) {
+      let n = 0;
+      for (const day of usable) {
+        const v = day.lut[day.idx[i]];
+        if (!Number.isNaN(v)) clear[n++] = v;
+      }
+      if (n < AQUA_MIN_CLEAR_DAYS) continue;
+      const sorted = clear.subarray(0, n).sort();
+      vals[i] = n % 2 ? sorted[n >> 1] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+    }
+    return vals;
+  }
+
+  // The season (tier 1) or year (tier 2) fallback for one lower-zoom tile,
+  // or null if it can't be fetched (the fallback is optional).
+  let aquaFallbackCache = new Map();
+  function getAquaFallback(tier, z, x, y) {
+    const key = tier + '/' + z + '/' + x + '/' + y;
+    if (aquaFallbackCache.has(key)) return aquaFallbackCache.get(key);
+    const offsets = tier === 1 ? AQUA_SEASON_OFFSETS : AQUA_YEAR_OFFSETS;
+    const p = combineAquaDays(z, x, y, aquaDatesFrom(offsets), AQUA_FALLBACK_SOURCES)
+      .catch(() => { aquaFallbackCache.delete(key); return null; });
+    boundedSet(aquaFallbackCache, key, p, 64);
+    return p;
+  }
+
+  // Each entry: a promise of { vals, tier } for one zoom <= 7 tile, where
+  // vals are ramp positions (NaN = no data) and tier says where each came
+  // from (0 = the chosen weeks, 1 = the season, 2 = the year); or null when
+  // the tile has no water readings at all.
+  let aquaSourceCache = new Map();
+  function getAquaSource(z, x, y) {
+    const key = z + '/' + x + '/' + y;
+    if (aquaSourceCache.has(key)) return aquaSourceCache.get(key);
+    const p = (async () => {
+      const saved = await loadAquaResult(z, x, y);
+      if (saved !== undefined) return saved;
+      const vals = await combineAquaDays(z, x, y, aquaDatesFrom(AQUA_WINDOW_OFFSETS));
+      fillNdviGaps(vals, 256, AQUA_GAP_FILL_PASSES);
+      const tier = new Uint8Array(256 * 256);
+      // Still-empty pixels (this includes land, which the water mask trims
+      // off later) try the season, then the year, read from the tile
+      // AQUA_FALLBACK_ZOOM_DROP levels further out.
+      const zf = Math.max(0, z - AQUA_FALLBACK_ZOOM_DROP);
+      const f = 2 ** (z - zf);
+      const xf = Math.floor(x / f), yf = Math.floor(y / f);
+      for (const t of [1, 2]) {
+        if (!vals.some((v) => Number.isNaN(v))) break;
+        const coarse = await getAquaFallback(t, zf, xf, yf);
+        if (!coarse) continue;
+        // This tile's corner and size inside the coarse tile, in its pixels.
+        const ox = (x - xf * f) * 256 / f, oy = (y - yf * f) * 256 / f;
+        for (let py = 0; py < 256; py++) {
+          const v = oy + (py + 0.5) / f - 0.5;
+          const vf = Math.floor(v), fy = v - vf;
+          const r0 = Math.min(255, Math.max(0, vf)) * 256, r1 = Math.min(255, Math.max(0, vf + 1)) * 256;
+          for (let px = 0; px < 256; px++) {
+            const i = py * 256 + px;
+            if (!Number.isNaN(vals[i])) continue;
+            const u = ox + (px + 0.5) / f - 0.5;
+            const uf = Math.floor(u), fx = u - uf;
+            const c0 = Math.min(255, Math.max(0, uf)), c1 = Math.min(255, Math.max(0, uf + 1));
+            let sum = 0, wsum = 0;
+            const add = (c, w) => { if (!Number.isNaN(c)) { sum += c * w; wsum += w; } };
+            add(coarse[r0 + c0], (1 - fx) * (1 - fy)); add(coarse[r0 + c1], fx * (1 - fy));
+            add(coarse[r1 + c0], (1 - fx) * fy); add(coarse[r1 + c1], fx * fy);
+            if (wsum > 0) { vals[i] = sum / wsum; tier[i] = t; }
+          }
+        }
+      }
+      const result = vals.every((v) => Number.isNaN(v)) ? null : { vals, tier };
+      saveAquaResult(z, x, y, result);
+      return result;
+    })().catch((err) => { aquaSourceCache.delete(key); throw err; });
+    boundedSet(aquaSourceCache, key, p, RAW_CACHE_LIMIT);
+    return p;
+  }
+
+  // glow: draw the glow tile instead (see AQUA_GLOW_FROM).
+  function renderAquaTile(src, sx, sy, span, vecWater, glow = false) {
+    const { vals, tier } = src;
+    const out = new ImageData(256, 256);
+    const d = out.data;
+    const scale = span / 256;
+    for (let py = 0; py < 256; py++) {
+      const v = sy + (py + 0.5) * scale - 0.5;
+      const vf = Math.floor(v);
+      const fy = v - vf;
+      const y0 = Math.min(255, Math.max(0, vf)) * 256;
+      const y1 = Math.min(255, Math.max(0, vf + 1)) * 256;
+      for (let px = 0; px < 256; px++) {
+        // Water only (1 = water; 0 = land, 2 = wetland).
+        if (vecWater && vecWater[py * 256 + px] !== 1) continue;
+        const u = sx + (px + 0.5) * scale - 0.5;
+        const uf = Math.floor(u);
+        const fx = u - uf;
+        const x0 = Math.min(255, Math.max(0, uf));
+        const x1 = Math.min(255, Math.max(0, uf + 1));
+        // Blend the 4 nearest readings, leaving out the missing ones. Their
+        // fallback fading (AQUA_TIER_ALPHA) is blended the same way, so the
+        // border between real and filled-in readings is soft too.
+        const corners = [
+          [y0 + x0, (1 - fx) * (1 - fy)], [y0 + x1, fx * (1 - fy)],
+          [y1 + x0, (1 - fx) * fy], [y1 + x1, fx * fy],
+        ];
+        let sum = 0, wsum = 0, fade = 0;
+        for (const [k, w] of corners) {
+          const c = vals[k];
+          if (!Number.isNaN(c)) { sum += c * w; wsum += w; fade += AQUA_TIER_ALPHA[tier[k]] * w; }
+        }
+        if (wsum <= 0) continue;
+        const t = sum / wsum;
+        const i = (py * 256 + px) * 4;
+        // [AI] Soft edges where the data stops. Zoomed in, each reading is a
+        //      big square on screen, and the edge of the data (next to a
+        //      no-data hole or a stretch of shore NASA skips) was a hard
+        //      staircase of those squares (seen along the Everglades coast,
+        //      2026-10-12). wsum is how much of the blend had real readings
+        //      (1 inside the data, falling to 0 across the last reading), so
+        //      fading by it turns the staircase into a smooth edge.
+        //      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+        // Faded where the reading came from the season or year fallback.
+        const edge = Math.min(1, wsum * 2) * (fade / wsum);
+        if (glow) {
+          // Only algae-rich water glows, fading in smoothly from AQUA_GLOW_FROM,
+          // in a slightly brighter shade of its own color.
+          let g = (t - AQUA_GLOW_FROM) / (1 - AQUA_GLOW_FROM);
+          if (g <= 0) continue;
+          g = g * g * (3 - 2 * g);
+          const li = ((Math.min(1, t + 0.2) * 255) | 0) * 3;
+          d[i] = AQUA_LUT[li]; d[i + 1] = AQUA_LUT[li + 1]; d[i + 2] = AQUA_LUT[li + 2];
+          d[i + 3] = Math.round(255 * g * edge);
+          continue;
+        }
+        const li = ((t * 255) | 0) * 3;
+        d[i] = AQUA_LUT[li]; d[i + 1] = AQUA_LUT[li + 1]; d[i + 2] = AQUA_LUT[li + 2];
+        d[i + 3] = Math.round(255 * (0.8 + 0.2 * t) * edge);
+      }
+    }
+    return out;
+  }
+
+  // Returns an ImageBitmap, or null for a tile with no water readings.
+  // Throws if NASA can't be reached (the protocol handler shows a blank tile
+  // and doesn't remember it).
+  async function buildAquaTileBitmap(z, x, y, glow = false) {
+    // Read from the NASA tile aquaDetailDrop(z) levels further out (but
+    // never past zoom 7, NASA's most detailed), enlarging the matching piece.
+    const zs = Math.max(0, Math.min(AQUA_NATIVE_MAX_ZOOM, z - aquaDetailDrop(z)));
+    const factor = 2 ** (z - zs);
+    const xs = Math.floor(x / factor);
+    const ys = Math.floor(y / factor);
+    const span = 256 / factor;
+    const sx = (x - xs * factor) * span;
+    const sy = (y - ys * factor) * span;
+    const vecPromise = getVectorWaterMask(z, x, y).catch(() => null);
+    const src = await getAquaSource(zs, xs, ys);
+    if (!src) return null;
+    const vecWater = await vecPromise;
+    return createImageBitmap(renderAquaTile(src, sx, sy, span, vecWater, glow));
+  }
+
+  let aquaTileCache = new Map();
+  let aquaVisible = false;
+  let aquaOpacityFactor = 1; // the algae layer's own opacity slider (setAquaOpacity)
+  // The land layer fades as you zoom in (down to 40% at zoom 9) so the photo
+  // shows through; water has little in the photo worth seeing, and the
+  // algae colors got too faint to read, so this layer stays at 90% of the
+  // opacity slider at every zoom.
+  function aquaOpacity(factor) {
+    return 0.9 * factor;
+  }
+
   // Holds finished tiles as ready-to-upload ImageBitmaps (see
   // buildVegTileBitmap). Each is ~256KB decoded vs. the ~30KB PNGs this used
   // to hold, so the cap is lower than the old 600.
@@ -1226,6 +1728,14 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     tileResultCache = new Map();
     const source = map.getSource('veg');
     if (source && source.setTiles) source.setTiles(source.tiles);
+    // The aquatic layer follows the year too.
+    aquaSourceCache = new Map();
+    aquaFallbackCache = new Map();
+    aquaTileCache = new Map();
+    for (const id of ['aqua', 'aquaGlow']) {
+      const aquaSource = map.getSource(id);
+      if (aquaSource && aquaSource.setTiles) aquaSource.setTiles(aquaSource.tiles);
+    }
   }
 
   let vegVisible = true;
@@ -1476,6 +1986,26 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     }
   });
 
+  // Aquatic layer tiles (see buildAquaTileBitmap). Not prefetched: it's
+  // off by default, and each tile already asks NASA for 64 images.
+  maplibregl.addProtocol('aqua', async (params) => {
+    const cached = aquaTileCache.get(params.url);
+    if (cached) return { data: cached };
+    try {
+      // aqua://{z}/{x}/{y} is the layer itself, aqua://glow/{z}/{x}/{y} its glow.
+      let path = params.url.replace('aqua://', '');
+      const glow = path.startsWith('glow/');
+      if (glow) path = path.slice(5);
+      const [z, xRaw, y] = path.split('/').map(Number);
+      const bitmap = await buildAquaTileBitmap(z, wrapX(xRaw, z), y, glow);
+      if (!bitmap) return emptyTileResponse();
+      boundedSet(aquaTileCache, params.url, bitmap, 200);
+      return { data: bitmap };
+    } catch (err) {
+      return emptyTileResponse();
+    }
+  });
+
   // --- Off-screen prefetching -------------------------------------------
   const PREFETCH_BUFFER_TILES = 2;
   const PREFETCH_CONCURRENCY = 3;
@@ -1674,6 +2204,25 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
           // line. One canonical wording lives on the AttributionControl
           // itself, below.
         },
+        // Algae in water (the "Aquatic" switch); see buildAquaTileBitmap.
+        // Past zoom 12 MapLibre just enlarges zoom-12 tiles.
+        aqua: {
+          type: 'raster',
+          tiles: ['aqua://{z}/{x}/{y}'],
+          tileSize: 256,
+          minzoom: 0,
+          maxzoom: 12
+        },
+        // The algae glow (see AQUA_GLOW_FROM). tileSize 1024 makes MapLibre
+        // use tiles from 2 zoom levels further out, stretched 4x with
+        // smoothing: that stretch is what blurs it into a soft glow.
+        aquaGlow: {
+          type: 'raster',
+          tiles: ['aqua://glow/{z}/{x}/{y}'],
+          tileSize: 1024,
+          minzoom: 0,
+          maxzoom: 10
+        },
         veg: {
           type: 'raster',
           tiles: ['veg://{z}/{x}/{y}'],
@@ -1695,6 +2244,16 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
         { id: 'earth-backdrop', type: 'background', paint: { 'background-color': '#25382a' } },
         { id: 'satellite', type: 'raster', source: 'satellite', paint: { 'raster-fade-duration': 0 } },
         ...MAP_LAYERS,
+        // Off until the Aquatic switch is turned on; a hidden layer's tiles
+        // aren't downloaded at all.
+        { id: 'aqua', type: 'raster', source: 'aqua', layout: { visibility: 'none' }, paint: {
+            'raster-opacity': aquaOpacity(aquaOpacityFactor),
+            'raster-fade-duration': 0
+          } },
+        { id: 'aqua-glow', type: 'raster', source: 'aquaGlow', layout: { visibility: 'none' }, paint: {
+            'raster-opacity': aquaOpacity(aquaOpacityFactor) * AQUA_GLOW_OPACITY.satellite,
+            'raster-fade-duration': 0
+          } },
         { id: 'veg', type: 'raster', source: 'veg', paint: {
             'raster-opacity': vegOpacityExpr(vegOpacityFactor),
             'raster-saturation': ['interpolate', ['linear'], ['zoom'], 9, 0, 14, 0.3],
@@ -1737,19 +2296,25 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
   // [AI] Shortened for the Google-Maps-style corner strip (David asked, 2026-09-29);
   //      every required credit is still named.
   const DEFAULT_IMAGERY_CREDIT = 'Imagery © Esri, Maxar, Earthstar Geographics';
-  const OTHER_CREDITS = ' | © OpenFreeMap © OpenMapTiles © OpenStreetMap contributors | NDVI: NASA MODIS';
+  const OTHER_CREDITS = ' | © OpenFreeMap © OpenMapTiles © OpenStreetMap contributors';
+  // While the aquatic layer is on, the NASA credit names both sensors. Kept
+  // short so the credit line still fits on one line on a small laptop.
+  const NDVI_CREDIT = ' | NDVI: NASA MODIS';
+  const NDVI_AQUA_CREDIT = ' | NASA MODIS, VIIRS';
   let attributionControl = null;
   let imageryCredit = null;
   // text === null -> Map view: no Esri imagery on screen, so no Esri credit.
-  function setImageryCredit(text) {
-    if (text === imageryCredit) return;
+  // force: rebuild even if the imagery text is the same (the aquatic
+  // credit was turned on or off).
+  function setImageryCredit(text, force = false) {
+    if (text === imageryCredit && !force) return;
     imageryCredit = text;
     if (attributionControl) map.removeControl(attributionControl);
     attributionControl = new maplibregl.AttributionControl({
       compact: false,
       customAttribution: text === null
-        ? '© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors | NDVI: NASA MODIS'
-        : text + ' | Powered by <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>' + OTHER_CREDITS
+        ? '© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors' + (aquaVisible ? NDVI_AQUA_CREDIT : NDVI_CREDIT)
+        : text + ' | Powered by <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>' + OTHER_CREDITS + (aquaVisible ? NDVI_AQUA_CREDIT : NDVI_CREDIT)
     });
     map.addControl(attributionControl);
   }
@@ -2012,15 +2577,39 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       map.setPaintProperty('veg', 'raster-opacity', vegOpacityExpr(factor));
     },
 
+    // [AI] The algae layer's own opacity (the Layers panel gives each layer
+    //      its own slider). Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+    setAquaOpacity(factor) {
+      aquaOpacityFactor = factor;
+      map.setPaintProperty('aqua', 'raster-opacity', aquaOpacity(factor));
+      map.setPaintProperty('aqua-glow', 'raster-opacity', aquaOpacity(factor) * AQUA_GLOW_OPACITY[currentBasemap]);
+    },
+
     setVegVisible(visible) {
       vegVisible = visible;
       map.setLayoutProperty('veg', 'visibility', visible ? 'visible' : 'none');
+    },
+
+    // [AI] The "Aquatic" switch: shows or hides algae in water (see
+    //      buildAquaTileBitmap) and adds or removes its credit.
+    //      Written: 2026-10-12 · Claude Opus 5.5 · requested by David
+    setAquaVisible(visible) {
+      aquaVisible = visible;
+      map.setLayoutProperty('aqua', 'visibility', visible ? 'visible' : 'none');
+      map.setLayoutProperty('aqua-glow', 'visibility', visible ? 'visible' : 'none');
+      // In the Map view, water is light blue, the same as the algae colors,
+      // so a lake full of data looked like an empty one (Lake Erie, checked
+      // 2026-10-12). While the layer is on, Map-view water turns gray:
+      // colored water has a reading, gray water has none.
+      map.setPaintProperty('map-water', 'fill-color', visible ? AQUA_MAP_WATER : P.water);
+      setImageryCredit(imageryCredit, true);
     },
 
     switchBasemap(mode) {
       if (mode !== 'satellite' && mode !== 'map') return;
       currentBasemap = mode;
       scheduleCreditUpdate();
+      map.setPaintProperty('aqua-glow', 'raster-opacity', aquaOpacity(aquaOpacityFactor) * AQUA_GLOW_OPACITY[mode]);
       const isMap = mode === 'map';
       map.setLayoutProperty('satellite', 'visibility', isMap ? 'none' : 'visible');
       for (const id of MAP_LAYER_IDS) map.setLayoutProperty(id, 'visibility', isMap ? 'visible' : 'none');
