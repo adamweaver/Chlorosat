@@ -1,3 +1,15 @@
+// Unit 1: calculateDataChange(startNdvi, endNdvi)
+// Correct: Two NDVI grids of the same size, for the start and end
+// year.
+// Incorrect: A grid is missing, null, not a list of numbers, or the two
+// grids are different sizes.
+// Boundary condition: NDVI at or below 0 (water, pavement)
+// counts as 0.
+// Edge case: A pixel with no data (NaN, e.g. clouds) in either year
+// stays NaN
+
+
+
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { calculateDataChange } from "../src/lib/map/vegetationChange.js";
