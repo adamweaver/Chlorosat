@@ -1581,7 +1581,7 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     schedulePrefetch({ lng: velLng, lat: velLat }, { neighborZooms: false });
   }
 
-  let vegOpacityFactor = 0.7;
+  let vegOpacityFactor = 1.0;
   // Tracks the "find my location" marker so a repeat click moves the same
   // pin instead of stacking a new one on top each time.
   let userLocationMarker = null;
