@@ -11,11 +11,13 @@
  *              MIN_YEAR - 1 and MAX_YEAR + 1 -> null.
  *   Edge:      null, undefined, "", {}, [], NaN, Infinity, "20244", 2024.5
  *              -> null without throwing; an in-range year with no data -> null.
+ * In the test names, "rejected" means selectYear returns null.
  * Run from web/:  npm test   (only this file: node --test tests/selectYear.test.mjs)
  * Against the stub (shows failing tests):
  *   $env:SEARCH_IMPL="stub"; node --test tests/selectYear.test.mjs */
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { inspect } from "node:util";
 // Expected values always come from the real year list, even in stub mode.
 import { NDVI_YEARS, MIN_YEAR, MAX_YEAR } from "../src/lib/map/plotGivenYear.js";
 
@@ -28,50 +30,44 @@ const { selectYear } = await import(impl);
 const BEFORE_FIRST = String(Number(MIN_YEAR) - 1);
 const AFTER_LAST = String(Number(MAX_YEAR) + 1);
 
-describe("selectYear", () => {
+describe(`selectYear: checks the year is one the map has (${MIN_YEAR} to ${MAX_YEAR})`, () => {
   // ---- Correct ----
-  // TC1.1 (Correct): a mid-range year as text comes back as that same year
-  test("correct: a valid year as text returns that year", () => {
+  test(`TC1.1 Correct: "2020" is accepted`, () => {
     assert.equal(selectYear("2020"), "2020");
   });
 
-  // TC1.2 (Correct): the slider sends text, but a whole number also works.
-  // It comes back as text so both forms give the same answer.
-  test("correct: a valid year as a number returns it as text", () => {
+  // The year slider sends text, but a whole number also works. It comes back
+  // as text so both forms give the same answer.
+  test("TC1.2 Correct: 2020 typed as a number is accepted", () => {
     assert.equal(selectYear(2020), "2020");
   });
 
-  // TC1.3 (Correct): every year in the range can be selected
-  test("correct: every year in the range is selectable", () => {
+  test(`TC1.3 Correct: every year from ${MIN_YEAR} to ${MAX_YEAR} is accepted`, () => {
     for (const year of NDVI_YEARS) {
-      assert.equal(selectYear(year), year, `"${year}" should be selectable`);
-      assert.equal(selectYear(Number(year)), year, `${year} should be selectable`);
+      assert.equal(selectYear(year), year, `"${year}" should be accepted`);
+      assert.equal(selectYear(Number(year)), year, `${year} should be accepted`);
     }
   });
 
   // ---- Incorrect ----
-  // TC2.1 (Incorrect): years far outside the range are rejected
-  test("incorrect: a year far outside the range returns null", () => {
+  test("TC2.1 Incorrect: 1800, 3000 and -2020 are rejected", () => {
     assert.equal(selectYear(1800), null);
     assert.equal(selectYear(3000), null);
     assert.equal(selectYear(-2020), null);
   });
 
-  // TC2.2 (Incorrect): text that is not a year is rejected
-  test("incorrect: text that is not a year returns null", () => {
+  test(`TC2.2 Incorrect: words like "abc" are rejected`, () => {
     assert.equal(selectYear("abc"), null);
     assert.equal(selectYear("year 2020"), null);
   });
 
   // ---- Boundary ----
-  // TC3.1 (Boundary): the exact first and last years are accepted
-  test("boundary: first and last years are accepted", () => {
+  test(`TC3.1 Boundary: first year ${MIN_YEAR} and last year ${MAX_YEAR} are accepted`, () => {
     assert.equal(selectYear(MIN_YEAR), MIN_YEAR);
     assert.equal(selectYear(MAX_YEAR), MAX_YEAR);
   });
 
-  // TC3.2 (Boundary): one year before and one year after are rejected
-  test("boundary: one year before and after the range are rejected", () => {
+  test(`TC3.2 Boundary: ${BEFORE_FIRST} and ${AFTER_LAST} (one past each end) are rejected`, () => {
     assert.equal(selectYear(BEFORE_FIRST), null);
     assert.equal(selectYear(AFTER_LAST), null);
     assert.equal(selectYear(Number(BEFORE_FIRST)), null);
@@ -79,17 +75,15 @@ describe("selectYear", () => {
   });
 
   // ---- Edge ----
-  // TC4.1 (Edge): empty, missing and wrong-type input is rejected, no crash
-  test("edge: empty, missing and wrong-type input returns null without throwing", () => {
+  test("TC4.1 Edge: blank, missing or non-year values are rejected without crashing", () => {
     const badInputs = [null, undefined, "", {}, [], true, NaN, Infinity];
     for (const input of badInputs) {
-      assert.doesNotThrow(() => selectYear(input));
-      assert.equal(selectYear(input), null, `${String(input)} should be rejected`);
+      assert.doesNotThrow(() => selectYear(input), `${inspect(input)} should not crash`);
+      assert.equal(selectYear(input), null, `${inspect(input)} should be rejected`);
     }
   });
 
-  // TC4.2 (Edge): values that look like a year but aren't one are rejected
-  test("edge: year-like but malformed values return null", () => {
+  test(`TC4.2 Edge: near-misses like "20244" and 2024.5 are rejected`, () => {
     assert.equal(selectYear("20244"), null);  // 5 digits
     assert.equal(selectYear(2024.5), null);   // decimal
     assert.equal(selectYear("2024.0"), null); // decimal written as text
@@ -97,9 +91,8 @@ describe("selectYear", () => {
     assert.equal(selectYear(" 2024 "), null); // spaces around it
   });
 
-  // TC4.3 (Edge): a year inside the range that has no data is rejected.
   // A year list with a gap stands in for a data source that is missing 2020.
-  test("edge: an in-range year with no data returns null", () => {
+  test("TC4.3 Edge: a year in range that has no data is rejected", () => {
     const yearsWithGap = ["2019", "2021"];
     assert.equal(selectYear("2020", yearsWithGap), null);
     assert.equal(selectYear("2019", yearsWithGap), "2019");
