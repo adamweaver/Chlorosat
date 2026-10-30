@@ -24,7 +24,9 @@ import styles from "./Globe.module.css";
  *      team's chlorosat-map-demo prototype.
  *      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
  *      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/components/MapView.jsx
- *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comment describes the current app */
+ *      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comment describes the current app
+ *      Edited:  2026-10-29 · Composer · requested by Lucas · pass the globe to RegionPanel so it can draw
+ *      Edited:  2026-10-29 · Composer · requested by Lucas · tell RegionPanel which year the globe is showing */
 
 // 2026 added once NASA's Aug 13, 2026 NDVI composite and Esri's Aug 5, 2026
 // Wayback imagery were both published (checked 2026-09-29).
@@ -36,6 +38,9 @@ export default function MapApp() {
 
   const [engine, setEngine] = useState(null);
   const [year, setYear] = useState('2026');
+  // The year the globe is actually drawing. The slider label moves at once;
+  // this updates only after setYear runs, so a region average uses that year.
+  const [mapYear, setMapYear] = useState('2026');
   const [opacity, setOpacity] = useState(1.0);
   const [vegVisible, setVegVisible] = useState(true);
   const [basemap, setBasemap] = useState('satellite');
@@ -95,6 +100,7 @@ export default function MapApp() {
       if (engine && engineYearRef.current !== y) {
         engineYearRef.current = y;
         engine.setYear(y);
+        setMapYear(String(y));
       }
     }, YEAR_LOAD_DELAY_MS);
   }
@@ -164,7 +170,7 @@ export default function MapApp() {
         </div>
       )}
       <SideControls engine={engine} pushedUp={basemapHovered} />
-      <RegionPanel />
+      <RegionPanel engine={engine} mapYear={mapYear} />
       <Legend />
       <BaseMapToggle
         basemap={basemap}
