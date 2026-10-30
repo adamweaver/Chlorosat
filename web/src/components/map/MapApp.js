@@ -9,6 +9,7 @@ import OpacitySlider from "./controls/OpacitySlider";
 import SearchBar from "./controls/SearchBar";
 import SideControls from "./controls/SideControls";
 import Legend from "./controls/Legend";
+import RegionPanel from "./controls/RegionPanel";
 import BaseMapToggle from "./controls/BaseMapToggle";
 import styles from "./Globe.module.css";
 
@@ -163,6 +164,7 @@ export default function MapApp() {
         </div>
       )}
       <SideControls engine={engine} pushedUp={basemapHovered} />
+      <RegionPanel />
       <Legend />
       <BaseMapToggle
         basemap={basemap}
