@@ -1,7 +1,7 @@
 # CI: checks every PR (and main) so broken code can't be merged.
 # Two independent jobs run in parallel on GitHub's servers:
 #   pipeline -> Python lint (ruff) + tests (pytest)
-#   web      -> JS lint (eslint) + static build (proves the site still builds)
+#   web      -> JS lint (eslint) + unit tests (npm test) + static build (proves the site still builds)
 # Dependency caching: on (CS-024). Downloaded packages are reused between runs, so CI is faster.
 # Path filters (skip a job when its folder didn't change): not added; team decision pending.
 #   If added: filter PER JOB (e.g. dorny/paths-filter + `if:`), never with a workflow-level `paths:`.
@@ -49,4 +49,11 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci                        # exact versions from package-lock.json
       - run: npm run lint
+      # [AI] Purpose: Run every web unit test on each PR, so a failing test blocks the merge
+      #               (`web` is a required check on main) instead of being caught by hand.
+      #      Does:    npm test -> node --test "tests/*.test.*" (every test file in web/tests/;
+      #               the *.stub.mjs helpers are skipped). Needs no network or browser.
+      #      Context: CS-062. Before the build so a failing test stops the job early.
+      #      Written: 2026-10-30 · Claude Opus 5.5 · requested by Adam Weaver
+      - run: npm test
       - run: npm run build                 # output: web/out/
