@@ -39,21 +39,22 @@ The visible-light method (CS-026) lands in the second week.
 ## Definition of Done
 See [_template.md](_template.md#definition-of-done-applies-to-every-task).
 
-## Outcome (status 2026-10-12; sprint review Oct 14)
-✅ done · ◐ partly done · ○ not started. The team switched from this Leaflet/PNG plan to the
-NASA-fed globe in #9 (Oct 6), so much of the work landed outside the planned tasks.
+## Outcome (status 2026-10-12; sprint review Oct 14; unfinished tasks marked delayed 2026-10-30)
+✅ done · ⏸ delayed: not finished this sprint, carried over to [Sprint 4](sprint-4.md) (what got done
+is noted). The team switched from this Leaflet/PNG plan to the NASA-fed globe in #9 (Oct 6), so much
+of the work landed outside the planned tasks.
 Current status of every task: [BACKLOG.md](../BACKLOG.md).
 
 **Planned tasks**
 
 | ID | Owner | Result | PR |
 |---|---|---|---|
-| CS-020 | David | ○ Not started; David built the globe instead (CS-050). Now future-pipeline work | |
-| CS-021 | Lucas | ○ Not started. Now future-pipeline work | |
-| CS-022 | Kevin | ○ Open | |
-| CS-023 | Adam | ◐ About page done (David #9, Lucas #14). Year comparison and usability test not started | #9, #14 |
+| CS-020 | David | ⏸ Delayed: not started; David built the globe instead (CS-050). Now future-pipeline work | |
+| CS-021 | Lucas | ⏸ Delayed: not started. Now future-pipeline work | |
+| CS-022 | Kevin | ⏸ Delayed: not started | |
+| CS-023 | Adam | ⏸ Delayed: year comparison and usability test not started (the About page was written by David in #9 and Lucas in #14) | #9, #14 |
 | CS-024 | Adam | ✅ Done early in Sprint 2 | #7 |
-| CS-026 | Carter | ◐ Research done (VARI proposed); implementation not started | #6 |
+| CS-026 | Carter | ⏸ Delayed: research done (VARI proposed); implementation not started | #6 |
 | CS-027 | Adam | ✅ Done. Checked 2026-10-12: build files carry long-term cache headers and merges deploy automatically (`/data/manifest.json` no longer exists) | #5, #7 |
 
 **Unplanned work done this sprint**
@@ -66,12 +67,16 @@ Current status of every task: [BACKLOG.md](../BACKLOG.md).
 | CS-053 | Lucas | ✅ Docs + UML match the globe; Leaflet-era code removed; `web/src` reorganized | #14 |
 | CS-054 | Adam | ✅ README for the review checklist, screenshots, code comments, backlog + sprint status | #15 |
 
+Also on Oct 12: #16 changed the site name to `Chlorosat?` for a midterm exercise (`feature/midterm`)
+and #17 reverted it the same day (no net change). #18 (course unit tests) merged on Oct 14, the first
+day of Sprint 4, so it is recorded in [Sprint 4](sprint-4.md).
+
 **Week 7 milestone:** met on Oct 6 through the globe (#9) rather than CS-020/CS-022 as planned.
-**v0.1 goal:** not met: visible light, year comparison and statistics are not implemented. To decide at the review.
+**v0.1 goal:** not met: visible light, year comparison and statistics were not implemented by Oct 14. No scope decision was recorded at the review.
 
 ## Review
 - Demoed:
-- Not finished (→ carried over): CS-020, CS-021, CS-022, CS-023 (comparison, usability test), CS-026 (implementation)
+- Delayed (→ Sprint 4): CS-020, CS-021, CS-022, CS-023 (comparison, usability test), CS-026 (implementation)
 - Scope decisions for v1.0:
 
 ## Retrospective
