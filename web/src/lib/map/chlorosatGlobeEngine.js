@@ -1994,6 +1994,137 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
     refineTimer = setTimeout(stopRefiningLocation, REFINE_LOCATION_MS);
   }
 
+  /* [AI] Purpose: Average the vegetation health inside a finished outline.
+   *      Does:    Samples NASA's decoded NDVI (the same numbers the globe
+   *               recolors) for the current year. Pixel centers inside the
+   *               polygon are averaged. Water, missing data, and everything
+   *               south of 60°S are left out. A large outline drops to a
+   *               coarser NASA zoom so the browser fetches at most a few tiles.
+   *      Context: Called from RegionPanel after buildBoundedRegions() returns.
+   *               Does not change getNdviSource or the tile renderer.
+   *      Written: 2026-10-29 · Composer · requested by Lucas */
+  async function averageNdvi(points) {
+    if (!points || points.length < 3) return null;
+    const MAX_SAMPLE_TILES = 8;
+
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    for (const p of points) {
+      minLng = Math.min(minLng, p.lng);
+      maxLng = Math.max(maxLng, p.lng);
+    }
+    // A span wider than 180° is a region that crosses the date line.
+    // Shift those longitudes into 0..360 so the tile walk stays continuous.
+    const ring = (maxLng - minLng > 180)
+      ? points.map((p) => ({ lat: p.lat, lng: p.lng < 0 ? p.lng + 360 : p.lng }))
+      : points.slice();
+    let west = Infinity;
+    let east = -Infinity;
+    let south = Infinity;
+    let north = -Infinity;
+    for (const p of ring) {
+      west = Math.min(west, p.lng);
+      east = Math.max(east, p.lng);
+      south = Math.min(south, p.lat);
+      north = Math.max(north, p.lat);
+    }
+
+    function latTileY(lat, z) {
+      const n = 2 ** z;
+      const clamped = Math.max(-85.05112878, Math.min(85.05112878, lat));
+      const latRad = clamped * Math.PI / 180;
+      const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+      return Math.max(0, Math.min(n - 1, y));
+    }
+    function tileSpan(z) {
+      const n = 2 ** z;
+      const x0 = Math.floor(((west + 180) / 360) * n);
+      const x1 = Math.floor(((east + 180) / 360) * n);
+      const yNorth = latTileY(north, z);
+      const ySouth = latTileY(south, z);
+      const y0 = Math.min(yNorth, ySouth);
+      const y1 = Math.max(yNorth, ySouth);
+      return { x0, x1, y0, y1, count: (x1 - x0 + 1) * (y1 - y0 + 1) };
+    }
+    function pointInRing(lng, lat) {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const yi = ring[i].lat;
+        const yj = ring[j].lat;
+        const xi = ring[i].lng;
+        const xj = ring[j].lng;
+        const crosses = (yi > lat) !== (yj > lat);
+        if (crosses && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+    function pixelLatLng(z, tileX, tileY, px, py) {
+      const n = 2 ** z;
+      const lng = ((tileX + (px + 0.5) / 256) / n) * 360 - 180;
+      const mercY = (tileY + (py + 0.5) / 256) / n;
+      const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * mercY))) * (180 / Math.PI);
+      return { lng, lat };
+    }
+
+    let zoom = 0;
+    let span = tileSpan(0);
+    for (let z = NATIVE_MAX_ZOOM; z >= 0; z--) {
+      const candidate = tileSpan(z);
+      if (candidate.count > 0 && candidate.count <= MAX_SAMPLE_TILES) {
+        zoom = z;
+        span = candidate;
+        break;
+      }
+    }
+
+    let sum = 0;
+    let count = 0;
+    for (let tileX = span.x0; tileX <= span.x1; tileX++) {
+      const xw = wrapX(tileX, zoom);
+      for (let tileY = span.y0; tileY <= span.y1; tileY++) {
+        let src;
+        try {
+          src = await getNdviSource(zoom, xw, tileY);
+        } catch (err) {
+          continue;
+        }
+        if (!src || src.kind !== 'ndvi') continue;
+
+        // Vector shorelines first, NASA's land/water map if that tile is missing.
+        // One tile at a time: those helpers share a canvas with the live map.
+        let isLand = () => true;
+        const vec = await getVectorWaterMask(zoom, xw, tileY).catch(() => null);
+        if (vec) {
+          isLand = (i) => vec[i] !== 1;
+        } else {
+          const img = await getMaskImageData(zoom, xw, tileY, 0, 0, 256).catch(() => null);
+          if (img) {
+            const d = img.data;
+            isLand = (i) => !isWaterPixel(d[i * 4], d[i * 4 + 1], d[i * 4 + 2], d[i * 4 + 3]);
+          }
+        }
+
+        const vals = src.vals;
+        for (let py = 0; py < 256; py++) {
+          for (let px = 0; px < 256; px++) {
+            const { lng, lat } = pixelLatLng(zoom, tileX, tileY, px, py);
+            if (lat < SOUTH_POLAR_CUTOFF_LAT) continue;
+            if (lat < south || lat > north || lng < west || lng > east) continue;
+            if (!pointInRing(lng, lat)) continue;
+            const i = py * 256 + px;
+            if (!isLand(i)) continue;
+            const value = vals[i];
+            if (!Number.isFinite(value)) continue;
+            sum += value;
+            count += 1;
+          }
+        }
+      }
+    }
+    if (!count) return null;
+    return { mean: sum / count, count, year: NDVI_DATE.slice(0, 4) };
+  }
+
   return {
     map,
 
@@ -2012,6 +2143,9 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
         scheduleCreditUpdate();
       }
     },
+
+    // Average NDVI inside a finished outline. See averageNdvi above.
+    averageNdvi,
 
     setOpacity(factor) {
       vegOpacityFactor = factor;

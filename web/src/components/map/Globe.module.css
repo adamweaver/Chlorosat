@@ -667,6 +667,92 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+/* ---------- Draw-region panel ---------- */
+/* [AI] Purpose: Control for outlining a region, sitting just above the legend.
+ *      Does:    Closed, a small round icon button. Open, that icon stays and
+ *               Clear / Finish sit beside it in a short pill.
+ *      Written: 2026-10-29 · Composer · requested by Lucas
+ *      Edited:  2026-10-29 · Composer · requested by Lucas · icon button instead of a text chip
+ *      Edited:  2026-10-29 · Composer · requested by Lucas · inset Clear and Finish from the pill's right edge
+ *      Edited:  2026-10-29 · Composer · requested by Lucas · slightly tighter padding around the open pill */
+.regionPanel {
+  composes: panel;
+  left: 16px;
+  bottom: 172px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+}
+
+.regionPanelOpen {
+  width: max-content;
+  height: auto;
+  max-width: min(280px, calc(100vw - 180px));
+  padding: 2px 10px 2px 2px;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.regionToggle {
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: #f2f3f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.regionToggle[aria-expanded="true"] {
+  color: #56c27f;
+}
+
+.regionDraw {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.regionCount {
+  margin: 0;
+  font-size: 12px;
+  color: #9aa0a8;
+  white-space: nowrap;
+}
+
+.regionReadout {
+  margin: 0 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f2f3f5;
+  white-space: nowrap;
+}
+
+.regionButton {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #f2f3f5;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.regionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ---------- Loading badge ---------- */
 /* Sits under the search bar in its own fixed spot - no longer paired with
    .sideStack's position now that David moved that stack down to sit above
@@ -912,6 +998,14 @@
     transition: bottom 0.15s ease;
   }
 
+  /* Compact legend is ~70px tall at bottom: 24px. Stay above it, and stay
+     left of the basemap pill. */
+  .regionPanel {
+    left: 12px;
+    bottom: 108px;
+    transition: bottom 0.15s ease;
+  }
+
   .legendTitle {
     font-size: 9.5px;
     margin-bottom: 5px;
@@ -956,6 +1050,10 @@
   :global(.credits-open) .legendPanel,
   :global(.credits-open) .basemapStack {
     bottom: 40px;
+  }
+
+  :global(.credits-open) .regionPanel {
+    bottom: 124px;
   }
 
   .basemapOption {
