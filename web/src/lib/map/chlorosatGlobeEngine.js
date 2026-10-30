@@ -4,8 +4,9 @@
 //      Does:    createChlorosatGlobe(opts) builds one MapLibre globe inside
 //      `opts.container` and returns a small imperative API (setYear,
 //      setOpacity, setVegVisible, switchBasemap, zoomIn/Out, flyTo,
-//      flyToGlobe, fitToBounds, recenter, resetNorth, locate, destroy, plus
-//      the raw `map`) for the React components (MapApp and its controls).
+//      flyToGlobe, fitToBounds, recenter, resetNorth, locate, averageNdvi,
+//      destroy, plus the raw `map`) for the React components (MapApp and
+//      its controls).
 //      Returned directly rather than stored on `window`, so each React
 //      mount owns its own instance.
 //      Context: only ever imported by client-only components (MapApp.js,
@@ -15,10 +16,12 @@
 //      Written: 2026-09-24 · Claude Sonnet 5 · requested by David
 //      Ported:  2026-09-30 · Claude Opus 5.5 (for David) · from chlorosat-map-demo app/lib/chlorosatGlobeEngine.js
 //      Edited:  2026-10-12 · Claude Opus 5.5 · requested by Adam Weaver · comments brought up to date with the code
+//      Edited:  2026-10-30 · Claude Opus 5.5 · requested by Adam Weaver · averageNdvi uses the tested helpers in ../region.js
 import * as maplibregl from 'maplibre-gl';
 import { HEAT_RED, HEAT_YELLOW, HEAT_GREEN, HEAT_DARK_GREEN } from './heatColors';
 import { REF_SOURCE_ID, REF_SOURCE, REF_EXTRA_SOURCE_ID, REF_EXTRA_SOURCE, REF_GLYPHS, REF_LAYERS, REF_LAYER_IDS, registerCityDot } from './referenceLabels';
 import { plotGivenYear } from './plotGivenYear';
+import { buildBoundedRegions, containsPoint, calculateRegionStats } from '../region';
 
 // [AI] The .js copy, not the .mjs original: some servers (including ours at
 //      first deploy) send .mjs as a download type, and browsers then refuse to
@@ -2001,33 +2004,24 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
    *               south of 60°S are left out. A large outline drops to a
    *               coarser NASA zoom so the browser fetches at most a few tiles.
    *      Context: Called from RegionPanel after buildBoundedRegions() returns.
-   *               Does not change getNdviSource or the tile renderer.
-   *      Written: 2026-10-29 · Composer · requested by Lucas */
+   *               Does not change getNdviSource or the tile renderer. The
+   *               outline math and the averaging live in ../region.js
+   *               (buildBoundedRegions, containsPoint, calculateRegionStats),
+   *               where they are unit tested.
+   *      Written: 2026-10-29 · Composer · requested by Lucas
+   *      Edited:  2026-10-30 · Claude Opus 5.5 · requested by Adam Weaver · uses the region.js helpers instead of private copies (same results) */
   async function averageNdvi(points) {
-    if (!points || points.length < 3) return null;
+    let region;
+    try {
+      region = buildBoundedRegions(points);
+    } catch (err) {
+      return null;
+    }
+    if (!region) return null;
     const MAX_SAMPLE_TILES = 8;
-
-    let minLng = Infinity;
-    let maxLng = -Infinity;
-    for (const p of points) {
-      minLng = Math.min(minLng, p.lng);
-      maxLng = Math.max(maxLng, p.lng);
-    }
-    // A span wider than 180° is a region that crosses the date line.
-    // Shift those longitudes into 0..360 so the tile walk stays continuous.
-    const ring = (maxLng - minLng > 180)
-      ? points.map((p) => ({ lat: p.lat, lng: p.lng < 0 ? p.lng + 360 : p.lng }))
-      : points.slice();
-    let west = Infinity;
-    let east = -Infinity;
-    let south = Infinity;
-    let north = -Infinity;
-    for (const p of ring) {
-      west = Math.min(west, p.lng);
-      east = Math.max(east, p.lng);
-      south = Math.min(south, p.lat);
-      north = Math.max(north, p.lat);
-    }
+    // For an outline across the date line, ring/bbox longitudes run 0..360
+    // (see buildBoundedRegions) so the tile walk stays continuous.
+    const { west, east, south, north } = region.bbox;
 
     function latTileY(lat, z) {
       const n = 2 ** z;
@@ -2045,18 +2039,6 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       const y0 = Math.min(yNorth, ySouth);
       const y1 = Math.max(yNorth, ySouth);
       return { x0, x1, y0, y1, count: (x1 - x0 + 1) * (y1 - y0 + 1) };
-    }
-    function pointInRing(lng, lat) {
-      let inside = false;
-      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-        const yi = ring[i].lat;
-        const yj = ring[j].lat;
-        const xi = ring[i].lng;
-        const xj = ring[j].lng;
-        const crosses = (yi > lat) !== (yj > lat);
-        if (crosses && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
     }
     function pixelLatLng(z, tileX, tileY, px, py) {
       const n = 2 ** z;
@@ -2077,8 +2059,8 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
       }
     }
 
-    let sum = 0;
-    let count = 0;
+    // NDVI of every land pixel whose center is inside the outline.
+    const samples = [];
     for (let tileX = span.x0; tileX <= span.x1; tileX++) {
       const xw = wrapX(tileX, zoom);
       for (let tileY = span.y0; tileY <= span.y1; tileY++) {
@@ -2110,19 +2092,17 @@ export function createChlorosatGlobe({ container, onLoadingChange }) {
             const { lng, lat } = pixelLatLng(zoom, tileX, tileY, px, py);
             if (lat < SOUTH_POLAR_CUTOFF_LAT) continue;
             if (lat < south || lat > north || lng < west || lng > east) continue;
-            if (!pointInRing(lng, lat)) continue;
+            if (!containsPoint(region, lat, lng)) continue;
             const i = py * 256 + px;
             if (!isLand(i)) continue;
-            const value = vals[i];
-            if (!Number.isFinite(value)) continue;
-            sum += value;
-            count += 1;
+            samples.push(vals[i]); // missing data (NaN) is skipped by calculateRegionStats
           }
         }
       }
     }
-    if (!count) return null;
-    return { mean: sum / count, count, year: NDVI_DATE.slice(0, 4) };
+    const stats = calculateRegionStats(samples);
+    if (!stats) return null;
+    return { ...stats, year: NDVI_DATE.slice(0, 4) };
   }
 
   return {
