@@ -28,9 +28,16 @@
 ## Standup notes
 <!-- optional: paste highlights / blockers here -->
 
+## Outcome (fill in at the review)
+✅ done · ⏸ delayed: not finished this sprint, carried over (note what got done). Current status of every task: [BACKLOG](../BACKLOG.md).
+
+| ID | Owner | Result | PR |
+|---|---|---|---|
+| CS-0XX | | | |
+
 ## Review
 - Demoed:
-- Not finished (→ carried over):
+- Delayed (→ next sprint):
 
 ## Retrospective
 | Went well | Didn't go well | Change next sprint |

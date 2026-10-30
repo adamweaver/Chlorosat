@@ -11,6 +11,7 @@ Chlorosat shows **how green any place on Earth is**, using NASA satellite vegeta
 - [Not implemented yet](#not-implemented-yet)
 - [How the live site works](#how-the-live-site-works)
 - [Setup](#setup)
+  - [Run the unit tests](#run-the-unit-tests)
 - [Contributing](#contributing)
 - [Project structure](#project-structure)
 - [Docs](#docs)
@@ -32,14 +33,15 @@ Chlorosat shows **how green any place on Earth is**, using NASA satellite vegeta
 - **Map view:** a street map drawn by the app from OpenFreeMap vector tiles (OpenStreetMap data).
 - Place names and borders drawn by the app in both views.
 - Controls for year, vegetation visibility, opacity and view (Satellite/Map).
+- **Region average:** press the draw-region (outline) button above the legend, click 3 or more points on the globe, then press **Finish** to see the average NDVI inside the outline for the year on screen. Water and missing data are left out.
 - Place search with recent searches, your location, zoom, recenter and north reset.
 - Home, Map and About pages that work on phones and desktops.
-- Static build with automatic deployment on every merge to `main`.
+- Unit tests, lint and a static build checked on every pull request; automatic deployment on every merge to `main`.
 
 ## Not implemented yet
 
 - Comparing two years or showing gained/lost vegetation.
-- Statistics for a place, region or selected area.
+- Statistics beyond the drawn-outline average (for example, for a searched place or ZIP code).
 - Visible-light vegetation detection, or a method selector.
 - Downloading maps or statistics.
 - Sharing the current map view by URL.
@@ -71,41 +73,84 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the diagrams in [d
 
 ## Setup
 
-**You need:** [Git](https://git-scm.com) and [Node.js 22 or newer](https://nodejs.org). No API keys are required. The map loads its data from the services above, so you need an internet connection.
+**You need:** [Git](https://git-scm.com) and [Node.js](https://nodejs.org) **22.13 or newer** (the LTS download works, and it includes npm). No API keys are needed. To check what you have, run:
 
-**1. Get the code**
+```bash
+git --version
+node --version
+```
+
+`node --version` must print `v22.13.0` or higher.
+
+### Run the unit tests
+
+Run these four commands in a terminal, one at a time:
 
 ```bash
 git clone https://github.com/adamweaver/Chlorosat.git
-cd Chlorosat
-```
-
-**2. Run the website** (from the repo root)
-
-```bash
-cd web
-npm ci            # install the exact package versions from package-lock.json
-npm run dev       # start the dev server
-```
-
-Then open http://localhost:3000/ (home), http://localhost:3000/map/ (globe) or http://localhost:3000/about/.
-
-**3. Check your changes before opening a PR** (in `web/`)
-
-```bash
-npm run lint      # code style
-npm test          # unit tests (every file in web/tests/)
-npm run build     # static site -> web/out/ (this is what gets deployed)
-python3 -m http.server -d out 8000   # optional: preview the built site at http://localhost:8000
-```
-
-**4. Run the unit tests** (from the repo root)
-
-```bash
-cd web
+cd Chlorosat/web
 npm ci
 npm test
 ```
+
+1. `git clone` downloads the code into a new `Chlorosat` folder. Already cloned it? Skip this line.
+2. `cd Chlorosat/web` moves into the website folder. Every `npm` command in this README runs there.
+3. `npm ci` installs the exact package versions from `package-lock.json`. It may print warnings about deprecated packages or vulnerabilities. They don't affect the tests, so don't run `npm audit fix`.
+4. `npm test` runs every unit test. The tests need no internet, browser or API key.
+
+At the end you should see **`pass`** with the number of tests and **`fail 0`**. `fail 0` means every test passed.
+
+To run a single test file instead (still in `web/`), name it:
+
+```bash
+node --test tests/plotGivenYear.test.mjs
+```
+
+It prints a `MODULE_TYPELESS_PACKAGE_JSON` warning first; that warning is harmless.
+
+| Test file | What it checks |
+|---|---|
+| [plotGivenYear.test.mjs](web/tests/plotGivenYear.test.mjs) | `plotGivenYear`: a chosen year gives the date of NASA's map for it; years without data give `null` |
+| [selectYear.test.mjs](web/tests/selectYear.test.mjs) | `selectYear`: only years the map offers (2019–2026) are accepted |
+| [plotYearData.test.mjs](web/tests/plotYearData.test.mjs) | `plotYearData`: an accepted year gives its mid-August map date |
+| [searchPlaces.test.mjs](web/tests/searchPlaces.test.mjs) | `searchPlaces`: place search results (a fake search service stands in, so no internet is used) |
+| [minSearchLength.test.mjs](web/tests/minSearchLength.test.mjs) | `minSearchLength`: how many letters to type before a search starts |
+| [buildLabel.test.mjs](web/tests/buildLabel.test.mjs) | `buildLabel`: the text shown for each search result |
+| [buildBoundedRegions.test.mjs](web/tests/buildBoundedRegions.test.mjs) | `buildBoundedRegions`: a drawn outline needs 3 or more points with valid latitude and longitude |
+| [calculateRegionStats.test.mjs](web/tests/calculateRegionStats.test.mjs) | `calculateRegionStats`, `containsPoint` and the region `buildBoundedRegions` returns: the average the outline tool shows, whether a spot is inside an outline, and the outline's bounding box |
+| [plotVegetationChange.test.js](web/tests/plotVegetationChange.test.js) | `calculateDataChange`: vegetation change between two years (not on the map yet) |
+| [selectYearRange.test.mjs](web/tests/selectYearRange.test.mjs) | `selectYearRange`: which two years a comparison may use (not on the map yet) |
+| [plotDataChange.test.mjs](web/tests/plotDataChange.test.mjs) | `plotDataChange` and `changeClass`: vegetation change turned into colored pixels (not on the map yet) |
+
+Each file tests correct, incorrect, boundary and edge cases (a course unit-test activity). The [backlog](docs/BACKLOG.md) lists who owns which (CS-057 to CS-061). The `*.stub.mjs` files beside them are stand-ins used to show a test failing; `npm test` skips them. GitHub runs the same tests on every pull request.
+
+**If something goes wrong**
+
+- `Could not read package.json` or `` `npm ci` command can only install with an existing package-lock.json ``: you're in the wrong folder. Go to `Chlorosat/web` and try again. Don't run `npm install` in the top `Chlorosat` folder.
+- `cd: Chlorosat/web: No such file or directory`: you're not in the folder you cloned into. Already inside `Chlorosat`? Run `cd web` instead. Already in `web`? Skip the `cd`.
+- `SyntaxError: Unexpected token 'export'` or `Could not find '…/tests/*.test.*'`: your Node.js is too old. Install the LTS from nodejs.org.
+
+### Run the website
+
+In `web/`, after `npm ci`:
+
+```bash
+npm run dev
+```
+
+Then open http://localhost:3000/ (home), http://localhost:3000/map/ (globe) or http://localhost:3000/about/. The map loads its data from the services above, so it needs an internet connection. Press **Ctrl+C** to stop the server.
+
+### Check your changes before opening a PR
+
+In `web/`:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+`npm run lint` checks code style, `npm test` runs the unit tests, and `npm run build` makes the static site in `web/out/` (what gets deployed). To preview the build, run `python3 -m http.server -d out 8000` (on Windows: `py -m http.server -d out 8000`) and open http://localhost:8000.
 
 More detail, including an optional Esri API key: [docs/SETUP.md](docs/SETUP.md).
 The Python pipeline has its own setup; see [Future pipeline](#future-pipeline).
@@ -113,15 +158,16 @@ The Python pipeline has its own setup; see [Future pipeline](#future-pipeline).
 ## Contributing
 
 1. **Pick a task** from [docs/BACKLOG.md](docs/BACKLOG.md) and tell the team you're taking it.
-2. **Branch** from an up-to-date `main`:
+2. **Branch** from an up-to-date `main` (name it `feature/<name>`, `fix/<name>` or `docs/<name>`):
    ```bash
-   git switch main && git pull
-   git switch -c feature/<name>      # or fix/<name>, docs/<name>
+   git switch main
+   git pull
+   git switch -c feature/<name>
    ```
 3. **Make one focused change**, committing in small steps with short, clear messages (`Add year label`, not `stuff`).
-4. **Run the checks** from [Setup](#setup) step 3 for the part you changed.
-5. **Open a pull request** into `main`. The PR template asks what changed, how to test it, and whether AI helped.
-6. **Merge** after CI passes and one teammate approves. The site then deploys automatically. Delete your branch and move the task to **Done** in the backlog with the PR number.
+4. **Run the checks** in [Check your changes](#check-your-changes-before-opening-a-pr) (for the pipeline: `uv run ruff check` and `uv run pytest` in `pipeline/`).
+5. **Push and open a pull request** into `main`: run `git push -u origin feature/<name>`, then click **Compare & pull request** on GitHub. The PR template asks what changed, how to test it, and whether AI helped. In the same PR, move your task to **Done** in the backlog with the PR number.
+6. **Merge** after CI passes and one teammate approves. The site then deploys automatically. Delete your branch.
 
 Ask the team first before adding a dependency or changing the architecture, data sources or deployment.
 Using AI tools? Follow [AGENTS.md](AGENTS.md) and tag AI-written code with its `[AI]` comment block.
@@ -136,9 +182,12 @@ Using AI tools? Follow [AGENTS.md](AGENTS.md) and tag AI-written code with its `
 | `web/src/components/map/` | The globe, its controls and map-specific styles |
 | `web/src/components/home/` | Home page art (satellite, stars) and styles |
 | `web/src/components/Header.js` | Header shown on every page |
-| `web/src/lib/map/` | MapLibre engine, remote data, colors and labels |
+| `web/src/lib/` | MapLibre engine, remote data, colors, labels, year checks and change math (`map/`); drawn-outline math and its average (`region.js`) |
 | `web/src/styles/` | Global design tokens, resets and MapLibre overrides |
 | `web/public/` | Static files copied into the build as-is |
+| `web/tests/` | Unit tests, run with `npm test` (see [Run the unit tests](#run-the-unit-tests)) |
+| `web/scripts/` | Copies MapLibre's worker files into `web/public/` before `npm run dev` and `npm run build` |
+| `web/src/fonts/` | The Outfit font file and its license |
 | `pipeline/` | Future offline processing package; not used by the site |
 | `deploy/` | nginx config and manual deploy script (server side: Adam only) |
 | `.github/` | CI and deploy workflows; PR and issue templates |
@@ -151,10 +200,11 @@ Using AI tools? Follow [AGENTS.md](AGENTS.md) and tag AI-written code with its `
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): how the site fits together and why
 - [UML.md](docs/UML.md): diagrams of the components and data flow
 - [SETUP.md](docs/SETUP.md): full developer setup and common problems
-- [BACKLOG.md](docs/BACKLOG.md): every task with its owner, acceptance criteria and status; milestones
+- [BACKLOG.md](docs/BACKLOG.md): every task with its owner (once someone takes it), acceptance criteria and status; milestones; who's doing what each sprint
 - [PRINCIPLES.md](docs/PRINCIPLES.md): goals, audiences and design rules
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md): how merges reach the server, and the security rules
-- [docs/research/](docs/research/) and [docs/scrum/](docs/scrum/): earlier research and sprint plans (historical; some describe the retired Leaflet design)
+- [docs/scrum/](docs/scrum/): sprint plans. [Sprint 5](docs/scrum/sprint-5.md) is the current one; Sprints 2–3 describe the retired Leaflet design
+- [docs/research/](docs/research/): earlier research (historical; parts describe the retired Leaflet design)
 
 ## Future pipeline
 
