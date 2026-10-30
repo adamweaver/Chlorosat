@@ -70,7 +70,7 @@ See [_template.md](_template.md#definition-of-done-applies-to-every-task).
 | ID | Owner | Result | PR |
 |---|---|---|---|
 | CS-035 | David | ✅ Fix: the vegetation layer loads at the 100% the opacity slider shows (it was 70%). #19, a first try, was closed unmerged | #20 |
-| CS-066 | David | ○ Started (unplanned): an Aquatic (algae / chlorophyll) layer on the draft branch `feature/algae-bloom` (Oct 14); no PR yet | |
+| CS-066 | David | ○ Not merged (unplanned): an Aquatic (algae / chlorophyll) layer exists only on the draft branch `feature/algae-bloom` (Oct 14); no PR yet | |
 
 ## Review
 - Demoed:
