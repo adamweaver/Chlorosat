@@ -5,6 +5,9 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
+# --- Local notes (personal context files, never commit) ---
+/LOCALTEMP.txt
+
 # --- Secrets (never commit) ---
 .env
 .env.*
