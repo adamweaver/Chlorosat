@@ -7,6 +7,14 @@
  *      Written: 2026-10-12 · Claude Opus 5.5 · requested by David */
 export const NDVI_YEARS = [];
 
+export function selectYear() {
+  return null;
+}
+
+export function plotYearData() {
+  return null;
+}
+
 export function plotGivenYear() {
   return null;
 }

@@ -1,63 +1,91 @@
-/* [AI] Purpose: Unit tests for plotGivenYear() (which NDVI layer to plot
- *      for a chosen year) using equivalence partitions (CS 3203 Activity
- *      4-2, Chapter 9, Table 9.4).
- *        Correct:   a year the app offers, as text or a number
- *                   -> "YYYY-08-13".
- *        Incorrect: not a year (text, empty, null, decimal, array)
- *                   -> null.
- *        Boundary:  2019 and 2026 (first/last) -> plotted;
- *                   2018 and 2027 (one outside) -> null.
- *        Edge:      year-like values that aren't valid: 5 digits, leading
- *                   zero, negative, spaces around it -> null.
- *      Context: Run from web/:  node --test tests/plotGivenYear.test.mjs
- *               Against the stub (shows failing tests):
- *                 $env:SEARCH_IMPL="stub"; node --test tests/plotGivenYear.test.mjs
- *      Written: 2026-10-12 · Claude Opus 5.5 · requested by David */
-import { test } from "node:test";
+/* Feature:   PlotGivenYear · Developer: Carter Dayton
+ * Unit:      plotGivenYear(year) in src/lib/map/plotGivenYear.js
+ *            Checks the year (selectYear), then picks its layer (plotYearData).
+ *            Used by setYear() in the globe engine.
+ *            Valid year -> "YYYY-08-13". Invalid year -> null.
+ * Equivalence partitions (CS 3203, Chapter 9, Table 9.4):
+ *   Correct:   a year the app offers (MIN_YEAR-MAX_YEAR, 2019-2026), as
+ *              text or a number -> "YYYY-08-13" for that year.
+ *   Incorrect: a year far outside the range (1800, 3000, negative) or text
+ *              that is not a year -> null.
+ *   Boundary:  MIN_YEAR and MAX_YEAR -> plotted;
+ *              MIN_YEAR - 1 and MAX_YEAR + 1 -> null.
+ *   Edge:      null, undefined, "", {}, [], ["2024"], NaN, Infinity, "20244",
+ *              2024.5 -> null without throwing. (An in-range year with no
+ *              data is tested in selectYear.test.mjs.)
+ * In the test names, "rejected" means plotGivenYear returns null.
+ * Run from web/:  npm test   (only this file: node --test tests/plotGivenYear.test.mjs)
+ * Against the stub (shows failing tests):
+ *   $env:SEARCH_IMPL="stub"; node --test tests/plotGivenYear.test.mjs */
+import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { inspect } from "node:util";
+// Expected values always come from the real year list, even in stub mode.
+import { NDVI_YEARS, MIN_YEAR, MAX_YEAR } from "../src/lib/map/plotGivenYear.js";
 
 const impl = process.env.SEARCH_IMPL === "stub"
   ? "./plotGivenYear.stub.mjs"
   : "../src/lib/map/plotGivenYear.js";
 const { plotGivenYear } = await import(impl);
 
-// ---- Correct ----
-test("correct: year as text gives that year's mid-August layer", () => {
-  assert.equal(plotGivenYear("2024"), "2024-08-13");
-});
+// One year outside each end of the range ("2018" and "2027").
+const BEFORE_FIRST = String(Number(MIN_YEAR) - 1);
+const AFTER_LAST = String(Number(MAX_YEAR) + 1);
 
-test("correct: year as a number works too", () => {
-  assert.equal(plotGivenYear(2022), "2022-08-13");
-});
+describe("plotGivenYear: the whole feature (year in, map date out)", () => {
+  // ---- Correct ----
+  // Text is what the year slider sends.
+  test(`TC1.1 Correct: "2024" gives the map dated 2024-08-13`, () => {
+    assert.equal(plotGivenYear("2024"), "2024-08-13");
+  });
 
-// ---- Incorrect ----
-test("incorrect: non-year text returns null", () => {
-  assert.equal(plotGivenYear("abc"), null);
-  assert.equal(plotGivenYear(""), null);
-});
+  test("TC1.2 Correct: 2022 typed as a number gives the map dated 2022-08-13", () => {
+    assert.equal(plotGivenYear(2022), "2022-08-13");
+  });
 
-test("incorrect: null, undefined, decimal and array return null", () => {
-  assert.equal(plotGivenYear(null), null);
-  assert.equal(plotGivenYear(undefined), null);
-  assert.equal(plotGivenYear(2024.5), null);
-  assert.equal(plotGivenYear(["2024"]), null);
-});
+  test(`TC1.3 Correct: every year from ${MIN_YEAR} to ${MAX_YEAR} gives its own map date`, () => {
+    for (const year of NDVI_YEARS) {
+      assert.equal(plotGivenYear(year), `${year}-08-13`, `"${year}" should give ${year}-08-13`);
+      assert.equal(plotGivenYear(Number(year)), `${year}-08-13`, `${year} should give ${year}-08-13`);
+    }
+  });
 
-// ---- Boundary ----
-test("boundary: first and last offered years are plotted", () => {
-  assert.equal(plotGivenYear("2019"), "2019-08-13");
-  assert.equal(plotGivenYear("2026"), "2026-08-13");
-});
+  // ---- Incorrect ----
+  test("TC2.1 Incorrect: 1800, 3000 and -2024 are rejected", () => {
+    assert.equal(plotGivenYear(1800), null);
+    assert.equal(plotGivenYear(3000), null);
+    assert.equal(plotGivenYear(-2024), null);
+  });
 
-test("boundary: one year outside the range returns null", () => {
-  assert.equal(plotGivenYear("2018"), null);
-  assert.equal(plotGivenYear("2027"), null);
-});
+  test(`TC2.2 Incorrect: words like "abc" are rejected`, () => {
+    assert.equal(plotGivenYear("abc"), null);
+  });
 
-// ---- Edge ----
-test("edge: year-like but malformed values return null", () => {
-  assert.equal(plotGivenYear("20244"), null);
-  assert.equal(plotGivenYear("02024"), null);
-  assert.equal(plotGivenYear(-2024), null);
-  assert.equal(plotGivenYear(" 2024 "), null);
+  // ---- Boundary ----
+  test(`TC3.1 Boundary: first year ${MIN_YEAR} and last year ${MAX_YEAR} give a map date`, () => {
+    assert.equal(plotGivenYear(MIN_YEAR), `${MIN_YEAR}-08-13`);
+    assert.equal(plotGivenYear(MAX_YEAR), `${MAX_YEAR}-08-13`);
+  });
+
+  test(`TC3.2 Boundary: ${BEFORE_FIRST} and ${AFTER_LAST} (one past each end) are rejected`, () => {
+    assert.equal(plotGivenYear(BEFORE_FIRST), null);
+    assert.equal(plotGivenYear(AFTER_LAST), null);
+  });
+
+  // ---- Edge ----
+  // Not throwing matters: a bad value must not crash the map.
+  test("TC4.1 Edge: blank, missing or non-year values are rejected without crashing", () => {
+    const badInputs = [null, undefined, "", {}, [], ["2024"], NaN, Infinity];
+    for (const input of badInputs) {
+      assert.doesNotThrow(() => plotGivenYear(input), `${inspect(input)} should not crash`);
+      assert.equal(plotGivenYear(input), null, `${inspect(input)} should be rejected`);
+    }
+  });
+
+  test(`TC4.2 Edge: near-misses like "20244" and 2024.5 are rejected`, () => {
+    assert.equal(plotGivenYear("20244"), null);  // 5 digits
+    assert.equal(plotGivenYear(2024.5), null);   // decimal
+    assert.equal(plotGivenYear("02024"), null);  // leading zero
+    assert.equal(plotGivenYear(" 2024 "), null); // spaces around it
+  });
 });
