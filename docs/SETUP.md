@@ -21,8 +21,12 @@ Checks:
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
+
+`npm test` runs every unit test in `web/tests/` with Node's built-in test
+runner. It needs no network or browser.
 
 The build is a static export in `web/out/`. Preview it with:
 

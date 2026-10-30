@@ -89,6 +89,7 @@ uv run ruff check                 # lint
 cd web && npm ci                  # install JS deps
 npm run dev                       # local dev server (http://localhost:3000)
 npm run lint                      # lint
+npm test                          # unit tests (web/tests/)
 npm run build                     # static build -> web/out/
 ```
 

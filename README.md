@@ -94,8 +94,17 @@ Then open http://localhost:3000/ (home), http://localhost:3000/map/ (globe) or h
 
 ```bash
 npm run lint      # code style
+npm test          # unit tests (every file in web/tests/)
 npm run build     # static site -> web/out/ (this is what gets deployed)
 python3 -m http.server -d out 8000   # optional: preview the built site at http://localhost:8000
+```
+
+**4. Run the unit tests** (from the repo root)
+
+```bash
+cd web
+npm ci
+npm test
 ```
 
 More detail, including an optional Esri API key: [docs/SETUP.md](docs/SETUP.md).
