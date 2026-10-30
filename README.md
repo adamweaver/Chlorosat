@@ -99,17 +99,13 @@ npm run build     # static site -> web/out/ (this is what gets deployed)
 python3 -m http.server -d out 8000   # optional: preview the built site at http://localhost:8000
 ```
 
-**Reading the test results:** each line is one test. ✔ means it passed and ✖ means it failed.
-The summary at the end shows the totals; `fail 0` means everything passed.
-The tests don't need the internet or a browser, only Node.js 22 or newer.
-
-To run just one test file (for example `selectYear.test.mjs`) instead of all of them:
+**4. Run the unit tests** (from the repo root)
 
 ```bash
-node --test tests/selectYear.test.mjs
+cd web
+npm ci
+npm test
 ```
-
-Node may print a `MODULE_TYPELESS_PACKAGE_JSON` warning first. It's harmless and doesn't affect the results.
 
 More detail, including an optional Esri API key: [docs/SETUP.md](docs/SETUP.md).
 The Python pipeline has its own setup; see [Future pipeline](#future-pipeline).
