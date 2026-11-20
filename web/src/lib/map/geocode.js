@@ -191,6 +191,13 @@ const FETCH_LIMIT = 10;
 async function fetchCandidates(query, near, layers = null) {
   let url = `${PHOTON_URL}?q=${encodeURIComponent(query)}&limit=${FETCH_LIMIT}&lang=en`;
   if (layers) url += layers.map((layer) => `&layer=${layer}`).join("");
+  if (
+    typeof lat !== "number" || !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+    typeof lng !== "number" || !Number.isFinite(lng) || lng < -180 || lng > 180 ||
+    typeof zoom !== "number" || !Number.isFinite(zoom)
+  ) {
+    throw new Error("invalid near");
+  }
   if (near) {
     url += `&lat=${near.lat.toFixed(3)}&lon=${near.lng.toFixed(3)}&zoom=${Math.round(near.zoom)}&location_bias_scale=0.5`;
   }
