@@ -196,7 +196,7 @@ async function fetchCandidates(query, near, layers = null) {
     typeof lng !== "number" || !Number.isFinite(lng) || lng < -180 || lng > 180 ||
     typeof zoom !== "number" || !Number.isFinite(zoom)
   ) {
-    throw new Error("invalid near");
+    throw new Error("invalid location data");
   }
   if (near) {
     url += `&lat=${near.lat.toFixed(3)}&lon=${near.lng.toFixed(3)}&zoom=${Math.round(near.zoom)}&location_bias_scale=0.5`;
@@ -479,7 +479,10 @@ export async function searchPlaces(text, near = null) {
             return p.osm_key === "place" && normalize(p.name) === normalize(alias);
           })
           .map((f) => ({ ...f, properties: { ...f.properties, __alias: true } })))
-        .catch(() => [])
+        .catch(() => {
+          console.warn(`[Map Search] Alias lookup failed for "${alias}":`, err);
+          return [];
+        })
       : Promise.resolve([]),
   ]);
   const plain = mergeFeatures(aliased, plainOnly);
